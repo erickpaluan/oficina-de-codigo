@@ -1,0 +1,1050 @@
+@@module js-fundamentos | js | Fundamentos | Variáveis, tipos, operadores, textos e as primeiras funções.
+
+@@lesson js-primeiro-programa | Seu primeiro programa | 10
+@@body
+Programar é escrever instruções **precisas** para o computador executar, uma depois da outra. Ele é rápido, mas literal: faz exatamente o que você escreveu, não o que você quis dizer. Aprender a programar é, em boa parte, aprender a ser exato.
+
+JavaScript (JS) é a linguagem da web. Roda em todo navegador e, com o Node.js, também em servidores. É o que dá vida a páginas, aplicativos e APIs.
+
+### Mostrando algo na tela
+
+A instrução mais usada para aprender é `console.log(...)`. Ela escreve um valor no **console**, a área de saída logo abaixo do editor.
+
+```js run
+console.log("Olá, mundo!");
+console.log(2 + 3);
+```
+
+Textos ficam entre aspas e se chamam **strings**. Números não levam aspas. Cada instrução termina com `;`.
+
+### Guardando valores
+
+Uma **constante** guarda um valor sob um nome, para você usá-lo depois:
+
+```js run
+const cidade = "Curitiba";
+console.log(cidade);
+```
+
+Tudo que vem depois de `//` é **comentário**: o computador ignora, serve para explicar o código para humanos.
+
+> **Dica:** clique em "▶ rodar" nos exemplos e depois mude o código. Quebrar e consertar é a melhor forma de aprender.
+@@task
+Crie uma constante chamada `mensagem` com o texto exato `Olá, mundo!` e mostre-a no console com `console.log`.
+@@starter
+// Escreva seu código aqui
+
+@@tests
+$t('a constante mensagem existe', () => $ok(typeof mensagem !== 'undefined', 'Declare: const mensagem = ...'));
+$t('mensagem vale "Olá, mundo!"', () => $eq(mensagem, 'Olá, mundo!'));
+$t('você mostrou a mensagem com console.log', () => $ok($logs().some(l => l === 'Olá, mundo!'), 'Use console.log(mensagem);'));
+@@hints
+- A forma é: const nome = valor;
+- O texto vai entre aspas: "Olá, mundo!" (maiúsculas, acento e pontuação precisam estar iguais).
+- Depois da constante, escreva console.log(mensagem);
+@@solution
+const mensagem = "Olá, mundo!";
+console.log(mensagem);
+
+@@lesson js-variaveis-tipos | Variáveis e tipos de dados | 15
+@@body
+Variáveis são **caixas com nome**. Você guarda um valor, e o nome permite recuperá-lo depois.
+
+### `const`, `let` e `var`
+
+- `const`: o nome não pode ser reatribuído. É a escolha padrão.
+- `let`: o valor pode mudar ao longo do programa.
+- `var`: a forma antiga. Existe em códigos antigos, mas evite.
+
+```js run
+const nome = "Ana";
+let pontos = 10;
+pontos = pontos + 5;
+console.log(nome, pontos);
+// nome = "Bia";  // erro: Assignment to constant variable.
+```
+
+Nomes usam `camelCase` (`precoFinal`), não têm espaços, não começam com número e diferenciam maiúsculas de minúsculas (`idade` e `Idade` são nomes diferentes).
+
+### Tipos primitivos
+
+| Tipo | Exemplo | Para que serve |
+| --- | --- | --- |
+| `string` | `"texto"` | Texto |
+| `number` | `42`, `3.14` | Inteiros e decimais |
+| `boolean` | `true`, `false` | Verdadeiro ou falso |
+| `null` | `null` | Ausência **intencional** de valor |
+| `undefined` | `undefined` | Ainda não tem valor |
+| `bigint` | `123n` | Inteiros gigantes |
+
+O operador `typeof` informa o tipo de um valor:
+
+```js run
+console.log(typeof "oi");
+console.log(typeof 7);
+console.log(typeof true);
+console.log(typeof undefined);
+console.log(typeof null); // "object" é um bug histórico da linguagem
+console.log(0.1 + 0.2);   // 0.30000000000000004
+```
+
+> **Atenção:** números decimais usam ponto flutuante, por isso `0.1 + 0.2` não dá exatamente `0.3`. Para dinheiro, guarde centavos como inteiros.
+@@task
+Declare: `produto` (string `"Caderno"`), `preco` (número `50`), `emEstoque` (boolean `true`) e `desconto` (`null`). Depois crie `let quantidade = 3` e altere o valor para `5`.
+@@starter
+// 1. produto, preco, emEstoque e desconto
+
+// 2. quantidade começa com 3 e depois vira 5
+
+@@tests
+$t('produto é a string "Caderno"', () => { $eq(typeof produto, 'string'); $eq(produto, 'Caderno'); });
+$t('preco é o número 50', () => { $eq(typeof preco, 'number'); $eq(preco, 50); });
+$t('emEstoque é true', () => $eq(emEstoque, true));
+$t('desconto é null', () => $eq(desconto, null));
+$t('quantidade termina valendo 5', () => $eq(quantidade, 5));
+@@hints
+- Para algo que vai mudar, use let: let quantidade = 3;
+- Depois, reatribua sem repetir o let: quantidade = 5;
+- null se escreve sem aspas.
+@@solution
+const produto = "Caderno";
+const preco = 50;
+const emEstoque = true;
+const desconto = null;
+
+let quantidade = 3;
+quantidade = 5;
+
+@@lesson js-operadores | Operadores e expressões | 15
+@@body
+Uma **expressão** é qualquer trecho que produz um valor: `2 + 3`, `idade >= 18`, `nome.length`.
+
+### Aritméticos
+
+`+` `-` `*` `/` e também `%` (resto da divisão) e `**` (potência). O `%` é muito útil: `n % 2 === 0` significa "n é par".
+
+```js run
+console.log(17 / 5);
+console.log(17 % 5);
+console.log(2 ** 10);
+console.log(Math.floor(17 / 5)); // só a parte inteira
+```
+
+### Atribuição composta
+
+`x += 1` é o mesmo que `x = x + 1`. Existem `-=`, `*=`, `/=` e os atalhos `x++` e `x--`.
+
+### Comparação
+
+Use sempre `===` e `!==` (igualdade estrita). Os operadores `==` e `!=` convertem tipos escondido e geram surpresas: `0 == ""` é `true`. Os demais são `<`, `<=`, `>`, `>=`.
+
+### Lógicos
+
+- `&&` (E): verdadeiro se **os dois** lados forem.
+- `||` (OU): verdadeiro se **pelo menos um** for.
+- `!` (NÃO): inverte.
+- `??` (coalescência nula): usa o valor da direita só quando o da esquerda é `null` ou `undefined`.
+
+```js run
+const idade = 20;
+const temCarteira = true;
+console.log(idade >= 18 && temCarteira);
+const apelido = null;
+console.log(apelido ?? "sem apelido");
+```
+
+Quando misturar vários operadores, use parênteses para deixar a intenção clara.
+@@task
+Com `a` e `b` já declarados, crie estas constantes: `soma`, `resto` (resto de a por b), `quociente` (parte inteira de a dividido por b), `potencia` (b ao quadrado), `maiorQue` (a é maior que b?), `ambosPares` (a e b são pares?) e `nome` (use `entrada`, ou `"Visitante"` se for `null`).
+@@starter
+const a = 17;
+const b = 5;
+const entrada = null;
+
+// Declare soma, resto, quociente, potencia, maiorQue, ambosPares e nome
+
+@@tests
+$t('soma = 22', () => $eq(soma, 22));
+$t('resto = 2', () => $eq(resto, 2));
+$t('quociente = 3', () => $eq(quociente, 3));
+$t('potencia = 25', () => $eq(potencia, 25));
+$t('maiorQue = true', () => $eq(maiorQue, true));
+$t('ambosPares = false', () => $eq(ambosPares, false));
+$t('nome = "Visitante"', () => $eq(nome, 'Visitante'));
+@@hints
+- quociente: Math.floor(a / b)
+- Par significa resto 0 na divisão por 2: a % 2 === 0
+- ambosPares combina duas comparações com &&
+- nome: entrada ?? "Visitante"
+@@solution
+const a = 17;
+const b = 5;
+const entrada = null;
+
+const soma = a + b;
+const resto = a % b;
+const quociente = Math.floor(a / b);
+const potencia = b ** 2;
+const maiorQue = a > b;
+const ambosPares = a % 2 === 0 && b % 2 === 0;
+const nome = entrada ?? "Visitante";
+
+@@lesson js-strings | Textos (strings) | 15
+@@body
+Strings guardam texto. Podem usar aspas simples, duplas ou crases. As crases criam **template literals**, onde `${...}` insere valores no meio do texto:
+
+```js run
+const nome = "Lia";
+const idade = 30;
+console.log(`${nome} tem ${idade} anos e ${idade + 1} no ano que vem.`);
+```
+
+### Posições começam em zero
+
+```js run
+const palavra = "JavaScript";
+console.log(palavra.length);   // 10
+console.log(palavra[0]);       // "J"
+console.log(palavra.at(-1));   // "t" (último)
+```
+
+### Métodos que você vai usar sempre
+
+| Método | O que faz |
+| --- | --- |
+| `trim()` | Remove espaços do começo e do fim |
+| `toUpperCase()` / `toLowerCase()` | Muda a caixa |
+| `includes("x")` | Contém o trecho? |
+| `startsWith("x")` / `endsWith("x")` | Começa/termina com? |
+| `slice(i, j)` | Recorta do índice `i` até antes de `j` |
+| `split(" ")` | Quebra em um **array** de pedaços |
+| `replaceAll("a", "b")` | Troca todas as ocorrências |
+| `padStart(5, "0")` | Completa à esquerda |
+
+```js run
+const frase = "  aprender é divertido  ";
+console.log(frase.trim().toUpperCase());
+console.log("a,b,c".split(","));
+console.log("7".padStart(3, "0"));
+```
+
+> **Importante:** strings são **imutáveis**. `frase.trim()` devolve um texto novo e não altera `frase`. Guarde o resultado em uma variável se for usar depois.
+@@task
+Dada a `frase`, crie: `limpa` (sem espaços nas pontas), `tamanho` (quantidade de caracteres de `limpa`), `maiuscula` (`limpa` em maiúsculas), `temJS` (a frase contém `"JavaScript"`?), `palavras` (array com as palavras de `limpa`) e `resumo` (texto `Frase com N palavras`, usando template literal e `palavras.length`).
+@@starter
+const frase = "  Aprender JavaScript é divertido  ";
+
+// Declare limpa, tamanho, maiuscula, temJS, palavras e resumo
+
+@@tests
+$t('limpa = "Aprender JavaScript é divertido"', () => $eq(limpa, 'Aprender JavaScript é divertido'));
+$t('tamanho = 31', () => $eq(tamanho, 31));
+$t('maiuscula = "APRENDER JAVASCRIPT É DIVERTIDO"', () => $eq(maiuscula, 'APRENDER JAVASCRIPT É DIVERTIDO'));
+$t('temJS = true', () => $eq(temJS, true));
+$t('palavras tem 4 palavras', () => $eq(palavras, ['Aprender', 'JavaScript', 'é', 'divertido']));
+$t('resumo = "Frase com 4 palavras"', () => $eq(resumo, 'Frase com 4 palavras'));
+@@hints
+- Comece por limpa = frase.trim(); e use limpa nas demais.
+- palavras = limpa.split(" ")
+- resumo = `Frase com ${palavras.length} palavras` (com crases).
+@@solution
+const frase = "  Aprender JavaScript é divertido  ";
+
+const limpa = frase.trim();
+const tamanho = limpa.length;
+const maiuscula = limpa.toUpperCase();
+const temJS = limpa.includes("JavaScript");
+const palavras = limpa.split(" ");
+const resumo = `Frase com ${palavras.length} palavras`;
+
+@@lesson js-funcoes | Funções | 20
+@@body
+Uma **função** é um bloco de código com nome que você pode executar quantas vezes quiser. Pense numa máquina: recebe **entradas** (parâmetros), faz algo e devolve uma **saída** (retorno).
+
+```js run
+function dobro(numero) {
+  return numero * 2;
+}
+
+console.log(dobro(4));
+console.log(dobro(10));
+```
+
+- `numero` é um **parâmetro**: o nome que a função dá à entrada.
+- `4` e `10` são **argumentos**: os valores reais passados na chamada.
+- `return` devolve o resultado e **encerra** a função. Sem `return`, ela devolve `undefined`.
+
+### Valores padrão
+
+```js run
+function saudar(nome, saudacao = "Olá") {
+  return `${saudacao}, ${nome}!`;
+}
+console.log(saudar("Rui"));
+console.log(saudar("Rui", "Oi"));
+```
+
+### Boas práticas desde o início
+
+- Dê nomes que são **verbos**: `calcularTotal`, `ehPar`, `buscarUsuario`.
+- Faça cada função fazer **uma coisa só**.
+- Prefira devolver (`return`) a imprimir (`console.log`) dentro da função. Quem devolve pode ser testado e reutilizado.
+
+> **Nota:** funções de teste aqui devolvem valores. É isso que a verificação confere.
+@@task
+Escreva quatro funções: `dobro(n)` (o dobro de `n`), `saudar(nome, saudacao = "Olá")` (devolve `"Olá, Ana!"`), `areaRetangulo(largura, altura)` e `ehMultiploDe(n, d)` (devolve `true` se `n` é múltiplo de `d`).
+@@starter
+function dobro(n) {
+  // devolva o dobro de n
+}
+
+function saudar(nome, saudacao = "Olá") {
+  // devolva `${saudacao}, ${nome}!`
+}
+
+function areaRetangulo(largura, altura) {
+}
+
+function ehMultiploDe(n, d) {
+}
+
+@@tests
+$t('dobro(4) = 8', () => $eq(dobro(4), 8));
+$t('dobro(-3) = -6', () => $eq(dobro(-3), -6));
+$t('saudar("Ana") = "Olá, Ana!"', () => $eq(saudar('Ana'), 'Olá, Ana!'));
+$t('saudar("Ana", "Oi") = "Oi, Ana!"', () => $eq(saudar('Ana', 'Oi'), 'Oi, Ana!'));
+$t('areaRetangulo(3, 4) = 12', () => $eq(areaRetangulo(3, 4), 12));
+$t('ehMultiploDe(10, 5) = true', () => $eq(ehMultiploDe(10, 5), true));
+$t('ehMultiploDe(10, 3) = false', () => $eq(ehMultiploDe(10, 3), false));
+@@hints
+- Dentro de cada função você precisa de um return com a expressão.
+- ehMultiploDe: n % d === 0
+@@solution
+function dobro(n) {
+  return n * 2;
+}
+
+function saudar(nome, saudacao = "Olá") {
+  return `${saudacao}, ${nome}!`;
+}
+
+function areaRetangulo(largura, altura) {
+  return largura * altura;
+}
+
+function ehMultiploDe(n, d) {
+  return n % d === 0;
+}
+
+@@module js-fluxo | js | Controle de fluxo | Decisões e repetição: o que faz um programa parecer inteligente.
+
+@@lesson js-condicionais | Tomando decisões | 20
+@@body
+Programas precisam escolher caminhos. A estrutura básica é o `if`:
+
+```js run
+const nota = 6;
+
+if (nota >= 7) {
+  console.log("aprovado");
+} else if (nota >= 5) {
+  console.log("recuperação");
+} else {
+  console.log("reprovado");
+}
+```
+
+O computador testa as condições **de cima para baixo** e executa só o primeiro bloco verdadeiro.
+
+### Verdadeiro e falso ("truthy" e "falsy")
+
+Em condições, JS converte qualquer valor para booleano. Os únicos valores **falsy** são: `false`, `0`, `""`, `null`, `undefined`, `NaN` (e `0n`). Todo o resto é truthy, inclusive `"0"`, `[]` e `{}`.
+
+### Ternário e `switch`
+
+```js run
+const idade = 20;
+console.log(idade >= 18 ? "adulto" : "menor");
+
+const dia = 3;
+switch (dia) {
+  case 1:
+    console.log("domingo");
+    break;
+  case 3:
+    console.log("terça");
+    break;
+  default:
+    console.log("outro");
+}
+```
+
+Sem `break`, o `switch` "cai" para o próximo caso. Em funções, é comum usar `return` direto em cada caso.
+
+### Retorno antecipado
+
+Trate os casos inválidos primeiro e devolva logo. Isso evita `if` dentro de `if` e deixa o código plano:
+
+```js
+function dividir(a, b) {
+  if (b === 0) return null;
+  return a / b;
+}
+```
+@@task
+Implemente: `classificarNota(nota)` (`"inválida"` se não for número entre 0 e 10; `"aprovado"` se ≥ 7; `"recuperação"` se ≥ 5; senão `"reprovado"`), `ehBissexto(ano)` (divisível por 4, exceto os divisíveis por 100, a menos que também por 400) e `nomeDoDia(n)` (1 = `"domingo"` até 7 = `"sábado"`, qualquer outro = `"inválido"`).
+@@starter
+function classificarNota(nota) {
+}
+
+function ehBissexto(ano) {
+}
+
+function nomeDoDia(n) {
+  // dica: use switch
+}
+
+@@tests
+$t('classificarNota(9) = "aprovado"', () => $eq(classificarNota(9), 'aprovado'));
+$t('classificarNota(7) = "aprovado"', () => $eq(classificarNota(7), 'aprovado'));
+$t('classificarNota(5.5) = "recuperação"', () => $eq(classificarNota(5.5), 'recuperação'));
+$t('classificarNota(2) = "reprovado"', () => $eq(classificarNota(2), 'reprovado'));
+$t('classificarNota(11) e (-1) = "inválida"', () => { $eq(classificarNota(11), 'inválida'); $eq(classificarNota(-1), 'inválida'); });
+$t('classificarNota("8") = "inválida"', () => $eq(classificarNota('8'), 'inválida'));
+$t('ehBissexto: 2024 sim, 2023 não', () => { $eq(ehBissexto(2024), true); $eq(ehBissexto(2023), false); });
+$t('ehBissexto: 1900 não, 2000 sim', () => { $eq(ehBissexto(1900), false); $eq(ehBissexto(2000), true); });
+$t('nomeDoDia(1) = "domingo" e nomeDoDia(7) = "sábado"', () => { $eq(nomeDoDia(1), 'domingo'); $eq(nomeDoDia(7), 'sábado'); });
+$t('nomeDoDia(9) = "inválido"', () => $eq(nomeDoDia(9), 'inválido'));
+@@hints
+- Em classificarNota, trate o caso inválido primeiro: typeof nota !== "number" || nota < 0 || nota > 10.
+- ehBissexto cabe em uma linha: (ano % 4 === 0 && ano % 100 !== 0) || ano % 400 === 0
+- No switch, cada case pode usar return, então não precisa de break.
+@@solution
+function classificarNota(nota) {
+  if (typeof nota !== "number" || Number.isNaN(nota) || nota < 0 || nota > 10) return "inválida";
+  if (nota >= 7) return "aprovado";
+  if (nota >= 5) return "recuperação";
+  return "reprovado";
+}
+
+function ehBissexto(ano) {
+  return (ano % 4 === 0 && ano % 100 !== 0) || ano % 400 === 0;
+}
+
+function nomeDoDia(n) {
+  switch (n) {
+    case 1: return "domingo";
+    case 2: return "segunda";
+    case 3: return "terça";
+    case 4: return "quarta";
+    case 5: return "quinta";
+    case 6: return "sexta";
+    case 7: return "sábado";
+    default: return "inválido";
+  }
+}
+
+@@lesson js-lacos | Repetição com laços | 20
+@@body
+Quando uma tarefa se repete, você não copia o código: usa um **laço** (loop).
+
+### `for`
+
+Três partes: início; condição para continuar; passo a cada volta.
+
+```js run
+for (let i = 1; i <= 5; i++) {
+  console.log("volta", i);
+}
+```
+
+### `while`
+
+Repete enquanto a condição for verdadeira. Use quando não se sabe quantas voltas serão.
+
+```js run
+let n = 100;
+let passos = 0;
+while (n > 1) {
+  n = n / 2;
+  passos++;
+}
+console.log(passos);
+```
+
+> **Cuidado:** se a condição nunca ficar falsa, você cria um **laço infinito** e o programa trava. O editor interrompe a execução depois de alguns segundos.
+
+### `for...of`
+
+Percorre os itens de um array ou de um texto, sem se preocupar com índices:
+
+```js run
+for (const letra of "JS") {
+  console.log(letra);
+}
+```
+
+### Acumuladores
+
+O padrão mais comum: uma variável começa em um valor neutro e vai sendo atualizada.
+
+```js run
+let soma = 0;
+for (let i = 1; i <= 4; i++) {
+  soma += i;
+}
+console.log(soma); // 10
+```
+
+`break` sai do laço; `continue` pula para a próxima volta. Atenção aos erros "por um": `i < n` e `i <= n` dão resultados diferentes.
+@@task
+Implemente `somaAte(n)` (soma de 1 até n; devolve 0 se n < 1), `tabuada(n)` (array com 10 textos no formato `"3 x 1 = 3"` ... `"3 x 10 = 30"`) e `contarVogais(texto)` (quantidade de a, e, i, o, u, maiúsculas ou minúsculas, sem considerar acentos).
+@@starter
+function somaAte(n) {
+}
+
+function tabuada(n) {
+  const linhas = [];
+  // use um laço e linhas.push(...)
+  return linhas;
+}
+
+function contarVogais(texto) {
+}
+
+@@tests
+$t('somaAte(4) = 10', () => $eq(somaAte(4), 10));
+$t('somaAte(100) = 5050', () => $eq(somaAte(100), 5050));
+$t('somaAte(0) = 0', () => $eq(somaAte(0), 0));
+$t('tabuada(3) tem 10 linhas corretas', () => {
+  const r = tabuada(3);
+  $eq(r.length, 10);
+  $eq(r[0], '3 x 1 = 3');
+  $eq(r[9], '3 x 10 = 30');
+});
+$t('tabuada(7)[5] = "7 x 6 = 42"', () => $eq(tabuada(7)[5], '7 x 6 = 42'));
+$t('contarVogais("Banana") = 3', () => $eq(contarVogais('Banana'), 3));
+$t('contarVogais("JAVASCRIPT") = 3', () => $eq(contarVogais('JAVASCRIPT'), 3));
+$t('contarVogais("xyz") = 0', () => $eq(contarVogais('xyz'), 0));
+@@hints
+- somaAte: comece com let soma = 0 e some cada i dentro do for.
+- tabuada: linhas.push(`${n} x ${i} = ${n * i}`)
+- contarVogais: percorra com for...of e teste se "aeiou".includes(letra.toLowerCase()).
+@@solution
+function somaAte(n) {
+  let soma = 0;
+  for (let i = 1; i <= n; i++) {
+    soma += i;
+  }
+  return soma;
+}
+
+function tabuada(n) {
+  const linhas = [];
+  for (let i = 1; i <= 10; i++) {
+    linhas.push(`${n} x ${i} = ${n * i}`);
+  }
+  return linhas;
+}
+
+function contarVogais(texto) {
+  let total = 0;
+  for (const letra of texto) {
+    if ("aeiou".includes(letra.toLowerCase())) total++;
+  }
+  return total;
+}
+
+@@module js-colecoes | js | Coleções e dados | Arrays, objetos, callbacks e as ferramentas do dia a dia de quem programa.
+
+@@lesson js-arrays | Arrays (listas) | 20
+@@body
+Um **array** é uma lista ordenada de valores. Índices começam em 0.
+
+```js run
+const frutas = ["maçã", "banana", "uva"];
+console.log(frutas[0]);
+console.log(frutas.length);
+console.log(frutas.at(-1)); // último
+frutas.push("pera");        // adiciona no fim
+console.log(frutas);
+```
+
+### Operações principais
+
+| Método | Efeito | Muda o original? |
+| --- | --- | --- |
+| `push(x)` / `pop()` | Adiciona / remove no **fim** | Sim |
+| `unshift(x)` / `shift()` | Adiciona / remove no **início** | Sim |
+| `includes(x)` / `indexOf(x)` | Procura um valor | Não |
+| `slice(i, j)` | Copia um trecho | Não |
+| `splice(i, n)` | Remove (ou insere) no meio | Sim |
+| `join(", ")` | Junta em um texto | Não |
+| `reverse()` | Inverte | **Sim** |
+
+### Copiar com spread
+
+`[...lista]` cria uma **cópia rasa**. Fazer `const b = a` não copia nada: as duas variáveis apontam para a **mesma** lista.
+
+```js run
+const a = [1, 2, 3];
+const b = a;       // mesma lista
+const c = [...a];  // cópia
+b.push(4);
+console.log(a, c);
+```
+
+Alterar dados que você recebeu como parâmetro é uma fonte clássica de bugs. Quando possível, devolva uma lista nova em vez de mudar a original.
+@@task
+Implemente `ultimo(lista)` (último item ou `undefined` se vazia), `somaLista(lista)` (soma dos números) e `inverter(lista)` (uma lista **nova** com a ordem inversa, sem alterar a original).
+@@starter
+function ultimo(lista) {
+}
+
+function somaLista(lista) {
+}
+
+function inverter(lista) {
+}
+
+@@tests
+$t('ultimo([1, 2, 3]) = 3', () => $eq(ultimo([1, 2, 3]), 3));
+$t('ultimo([]) = undefined', () => $eq(ultimo([]), undefined));
+$t('somaLista([1, 2, 3, 4]) = 10', () => $eq(somaLista([1, 2, 3, 4]), 10));
+$t('somaLista([]) = 0', () => $eq(somaLista([]), 0));
+$t('inverter([1, 2, 3]) = [3, 2, 1]', () => $eq(inverter([1, 2, 3]), [3, 2, 1]));
+$t('inverter não altera a lista original', () => {
+  const original = ['a', 'b', 'c'];
+  const r = inverter(original);
+  $eq(original, ['a', 'b', 'c']);
+  $ok(r !== original, 'Devolva uma lista nova');
+});
+@@hints
+- lista.at(-1) já devolve undefined quando a lista é vazia.
+- Para somar, use um acumulador e for...of.
+- Copie antes de inverter: [...lista].reverse()
+@@solution
+function ultimo(lista) {
+  return lista.at(-1);
+}
+
+function somaLista(lista) {
+  let soma = 0;
+  for (const n of lista) soma += n;
+  return soma;
+}
+
+function inverter(lista) {
+  return [...lista].reverse();
+}
+
+@@lesson js-objetos | Objetos | 20
+@@body
+Um **objeto** agrupa dados relacionados em pares `chave: valor`. É a estrutura mais usada de JavaScript.
+
+```js run
+const pessoa = {
+  nome: "Marta",
+  idade: 34,
+  endereco: { cidade: "Recife", uf: "PE" },
+};
+
+console.log(pessoa.nome);
+console.log(pessoa["idade"]);
+pessoa.email = "marta@exemplo.com";   // adiciona
+delete pessoa.idade;                   // remove
+console.log(pessoa);
+```
+
+A notação com colchetes aceita uma variável como chave: `pessoa[campo]`.
+
+### Percorrendo objetos
+
+```js run
+const estoque = { lapis: 10, caneta: 4 };
+console.log(Object.keys(estoque));
+console.log(Object.values(estoque));
+console.log(Object.entries(estoque));
+for (const [item, qtd] of Object.entries(estoque)) {
+  console.log(item, qtd);
+}
+```
+
+### Encadeamento opcional `?.`
+
+Acessar uma propriedade de `undefined` dá erro. O `?.` interrompe a cadeia e devolve `undefined`:
+
+```js run
+const usuario = {};
+console.log(usuario.endereco?.cidade);        // undefined
+console.log(usuario.endereco?.cidade ?? "n/d"); // "n/d"
+```
+
+### Métodos
+
+Uma função dentro de um objeto é um **método**. Dentro dele, `this` aponta para o próprio objeto.
+
+```js run
+const conta = {
+  saldo: 100,
+  depositar(valor) {
+    this.saldo += valor;
+  },
+};
+conta.depositar(50);
+console.log(conta.saldo);
+```
+
+> **Referência:** `const` impede reatribuir a variável, não impede **mudar o conteúdo** do objeto.
+@@task
+Implemente: `criarPessoa(nome, idade)` (devolve `{ nome, idade, maiorDeIdade }`, com `maiorDeIdade` verdadeiro se idade ≥ 18), `contarChaves(obj)`, `cidadeDe(usuario)` (devolve `usuario.endereco.cidade`, ou `"desconhecida"` se não existir) e `somarValores(obj)` (soma os valores numéricos de um objeto).
+@@starter
+function criarPessoa(nome, idade) {
+}
+
+function contarChaves(obj) {
+}
+
+function cidadeDe(usuario) {
+}
+
+function somarValores(obj) {
+}
+
+@@tests
+$t('criarPessoa("Ana", 20)', () => $eq(criarPessoa('Ana', 20), { nome: 'Ana', idade: 20, maiorDeIdade: true }));
+$t('criarPessoa("Davi", 15)', () => $eq(criarPessoa('Davi', 15), { nome: 'Davi', idade: 15, maiorDeIdade: false }));
+$t('contarChaves({ a: 1, b: 2, c: 3 }) = 3', () => $eq(contarChaves({ a: 1, b: 2, c: 3 }), 3));
+$t('contarChaves({}) = 0', () => $eq(contarChaves({}), 0));
+$t('cidadeDe com endereço', () => $eq(cidadeDe({ endereco: { cidade: 'Natal' } }), 'Natal'));
+$t('cidadeDe sem endereço', () => $eq(cidadeDe({ nome: 'X' }), 'desconhecida'));
+$t('somarValores({ a: 10, b: 5, c: 1 }) = 16', () => $eq(somarValores({ a: 10, b: 5, c: 1 }), 16));
+@@hints
+- Em criarPessoa, o atalho { nome, idade } equivale a { nome: nome, idade: idade }.
+- contarChaves: Object.keys(obj).length
+- cidadeDe: usuario.endereco?.cidade ?? "desconhecida"
+- somarValores: percorra Object.values(obj) com for...of.
+@@solution
+function criarPessoa(nome, idade) {
+  return { nome, idade, maiorDeIdade: idade >= 18 };
+}
+
+function contarChaves(obj) {
+  return Object.keys(obj).length;
+}
+
+function cidadeDe(usuario) {
+  return usuario.endereco?.cidade ?? "desconhecida";
+}
+
+function somarValores(obj) {
+  let soma = 0;
+  for (const valor of Object.values(obj)) soma += valor;
+  return soma;
+}
+
+@@lesson js-arrow-callbacks | Funções como valores | 20
+@@body
+Em JS, funções são **valores** comuns: podem ser guardadas em variáveis, passadas como argumento e devolvidas por outras funções. Uma função que recebe outra como argumento é um **callback**.
+
+### Arrow functions
+
+Uma sintaxe mais curta:
+
+```js run
+const dobro = (n) => n * 2;          // retorno implícito
+const soma = (a, b) => {             // com bloco precisa de return
+  return a + b;
+};
+console.log(dobro(5), soma(2, 3));
+```
+
+Com um único parâmetro, os parênteses são opcionais (`n => n * 2`). Para devolver um objeto literal em uma linha, coloque entre parênteses: `() => ({ ok: true })`.
+
+### Callbacks
+
+```js run
+function repetir(vezes, acao) {
+  for (let i = 0; i < vezes; i++) {
+    acao(i);
+  }
+}
+
+repetir(3, (i) => console.log("passo", i));
+[10, 20].forEach((valor) => console.log(valor));
+```
+
+### Funções que devolvem funções
+
+```js run
+function criarMultiplicador(fator) {
+  return (n) => n * fator;
+}
+const triplo = criarMultiplicador(3);
+console.log(triplo(7));
+```
+
+`triplo` "lembra" o `fator` mesmo depois de `criarMultiplicador` terminar. Isso se chama **closure** e é um dos conceitos mais poderosos da linguagem. Vamos aprofundar mais adiante.
+@@task
+Implemente: `aplicarDuasVezes(fn, x)` (aplica `fn` ao resultado de `fn(x)`), `criarMultiplicador(fator)` (devolve uma função que multiplica por `fator`) e `executarN(n, fn)` (chama `fn(i)` para i de 0 até n-1).
+@@starter
+function aplicarDuasVezes(fn, x) {
+}
+
+function criarMultiplicador(fator) {
+}
+
+function executarN(n, fn) {
+}
+
+@@tests
+$t('aplicarDuasVezes(n => n + 3, 10) = 16', () => $eq(aplicarDuasVezes(n => n + 3, 10), 16));
+$t('aplicarDuasVezes(s => s + "!", "oi") = "oi!!"', () => $eq(aplicarDuasVezes(s => s + '!', 'oi'), 'oi!!'));
+$t('criarMultiplicador(4)(5) = 20', () => $eq(criarMultiplicador(4)(5), 20));
+$t('multiplicadores são independentes', () => {
+  const x2 = criarMultiplicador(2);
+  const x10 = criarMultiplicador(10);
+  $eq([x2(3), x10(3)], [6, 30]);
+});
+$t('executarN chama fn com 0, 1, 2', () => {
+  const vistos = [];
+  executarN(3, i => vistos.push(i));
+  $eq(vistos, [0, 1, 2]);
+});
+$t('executarN(0, fn) não chama fn', () => {
+  let chamadas = 0;
+  executarN(0, () => chamadas++);
+  $eq(chamadas, 0);
+});
+@@hints
+- aplicarDuasVezes: return fn(fn(x));
+- criarMultiplicador devolve uma arrow function: return (n) => n * fator;
+@@solution
+function aplicarDuasVezes(fn, x) {
+  return fn(fn(x));
+}
+
+function criarMultiplicador(fator) {
+  return (n) => n * fator;
+}
+
+function executarN(n, fn) {
+  for (let i = 0; i < n; i++) {
+    fn(i);
+  }
+}
+
+@@lesson js-arrays-funcionais | map, filter e reduce | 25
+@@body
+Os métodos de array que recebem callbacks substituem a maior parte dos laços `for` e deixam o código mais declarativo ("o que" em vez de "como").
+
+| Método | Devolve | Uso |
+| --- | --- | --- |
+| `map(fn)` | Novo array do mesmo tamanho | Transformar cada item |
+| `filter(fn)` | Novo array menor ou igual | Manter só os itens que passam no teste |
+| `find(fn)` | Um item ou `undefined` | Achar o primeiro que passa |
+| `some(fn)` / `every(fn)` | boolean | Algum / todos passam? |
+| `reduce(fn, inicial)` | Um único valor | Acumular tudo em um resultado |
+| `sort(cmp)` | O próprio array ordenado | Ordenar (**muda o original**) |
+
+```js run
+const precos = [10, 25, 40, 5];
+
+console.log(precos.map(p => p * 2));
+console.log(precos.filter(p => p >= 10));
+console.log(precos.find(p => p > 20));
+console.log(precos.some(p => p > 30), precos.every(p => p > 30));
+console.log(precos.reduce((total, p) => total + p, 0));
+```
+
+### Encadeando
+
+```js run
+const pedidos = [
+  { item: "livro", valor: 50, pago: true },
+  { item: "caneta", valor: 5, pago: false },
+  { item: "mochila", valor: 120, pago: true },
+];
+
+const totalPago = pedidos
+  .filter(p => p.pago)
+  .map(p => p.valor)
+  .reduce((soma, v) => soma + v, 0);
+console.log(totalPago);
+```
+
+### Ordenação
+
+Sem argumento, `sort` compara como **texto**: `[10, 9, 1].sort()` dá `[1, 10, 9]`. Passe uma função de comparação: negativa = `a` antes de `b`.
+
+```js run
+console.log([10, 9, 1].sort());
+console.log([10, 9, 1].sort((a, b) => a - b));
+```
+
+`sort` altera a lista original. Para não mudar, ordene uma cópia: `[...lista].sort(...)`.
+@@task
+Use os dados de `produtos`. Implemente: `nomesBaratos(lista, limite)` (nomes dos produtos com preço ≤ limite), `totalPorCategoria(lista)` (objeto `{ categoria: somaDosPrecos }`), `maisCaro(lista)` (o produto de maior preço, ou `undefined` se vazia) e `ordenarPorPreco(lista)` (cópia ordenada do mais barato ao mais caro, sem alterar a original).
+@@starter
+const produtos = [
+  { nome: "Caneta", preco: 3, categoria: "papelaria" },
+  { nome: "Mochila", preco: 120, categoria: "bolsas" },
+  { nome: "Caderno", preco: 18, categoria: "papelaria" },
+  { nome: "Estojo", preco: 12, categoria: "bolsas" },
+];
+
+function nomesBaratos(lista, limite) {
+}
+
+function totalPorCategoria(lista) {
+}
+
+function maisCaro(lista) {
+}
+
+function ordenarPorPreco(lista) {
+}
+
+@@tests
+$t('nomesBaratos(produtos, 15)', () => $eq(nomesBaratos(produtos, 15), ['Caneta', 'Estojo']));
+$t('nomesBaratos(produtos, 1) = []', () => $eq(nomesBaratos(produtos, 1), []));
+$t('totalPorCategoria(produtos)', () => $eq(totalPorCategoria(produtos), { papelaria: 21, bolsas: 132 }));
+$t('maisCaro(produtos) é a Mochila', () => $eq(maisCaro(produtos).nome, 'Mochila'));
+$t('maisCaro([]) = undefined', () => $eq(maisCaro([]), undefined));
+$t('ordenarPorPreco ordena do menor para o maior', () => $eq(ordenarPorPreco(produtos).map(p => p.preco), [3, 12, 18, 120]));
+$t('ordenarPorPreco não altera a lista original', () => {
+  const copia = produtos.map(p => p.nome);
+  ordenarPorPreco(produtos);
+  $eq(produtos.map(p => p.nome), copia);
+});
+@@hints
+- nomesBaratos: filter primeiro, depois map para pegar só o nome.
+- totalPorCategoria: reduce começando com {} e somando em acc[p.categoria] = (acc[p.categoria] ?? 0) + p.preco.
+- maisCaro: reduce comparando preços, ou ordene uma cópia e pegue o último.
+- ordenarPorPreco: [...lista].sort((a, b) => a.preco - b.preco)
+@@solution
+const produtos = [
+  { nome: "Caneta", preco: 3, categoria: "papelaria" },
+  { nome: "Mochila", preco: 120, categoria: "bolsas" },
+  { nome: "Caderno", preco: 18, categoria: "papelaria" },
+  { nome: "Estojo", preco: 12, categoria: "bolsas" },
+];
+
+function nomesBaratos(lista, limite) {
+  return lista.filter(p => p.preco <= limite).map(p => p.nome);
+}
+
+function totalPorCategoria(lista) {
+  return lista.reduce((acc, p) => {
+    acc[p.categoria] = (acc[p.categoria] ?? 0) + p.preco;
+    return acc;
+  }, {});
+}
+
+function maisCaro(lista) {
+  return lista.reduce((maior, p) => (maior === undefined || p.preco > maior.preco ? p : maior), undefined);
+}
+
+function ordenarPorPreco(lista) {
+  return [...lista].sort((a, b) => a.preco - b.preco);
+}
+
+@@lesson js-desestruturacao | Desestruturação, spread e rest | 20
+@@body
+Três recursos modernos que você verá em praticamente todo código JS atual.
+
+### Desestruturação
+
+Extrai valores de arrays e objetos para variáveis:
+
+```js run
+const [primeiro, segundo] = ["a", "b", "c"];
+const { nome, idade = 18 } = { nome: "Caio" };
+console.log(primeiro, segundo, nome, idade);
+
+// trocar dois valores sem variável temporária
+let x = 1, y = 2;
+[x, y] = [y, x];
+console.log(x, y);
+```
+
+Também funciona nos parâmetros de uma função: `function exibir({ nome, preco })`.
+
+### Spread `...`
+
+Espalha os itens de um array ou as chaves de um objeto. Perfeito para copiar e atualizar sem mutar:
+
+```js run
+const base = { nome: "Lia", idade: 30 };
+const atualizado = { ...base, idade: 31 };
+console.log(base, atualizado);
+
+const juntos = [...[1, 2], ...[3, 4]];
+console.log(juntos);
+```
+
+### Rest
+
+O mesmo `...` do lado de "recolher": junta o que sobrou.
+
+```js run
+const { a, ...resto } = { a: 1, b: 2, c: 3 };
+console.log(a, resto);
+
+function somar(...numeros) {
+  return numeros.reduce((s, n) => s + n, 0);
+}
+console.log(somar(1, 2, 3, 4));
+```
+
+> **Lembre:** spread faz cópia **rasa**. Objetos aninhados continuam compartilhados entre a cópia e o original.
+@@task
+Implemente: `trocar([a, b])` (devolve `[b, a]`), `atualizarIdade(pessoa, novaIdade)` (objeto novo, sem alterar o original), `resumo({ nome, idade = 18, ...resto })` (devolve `"Nome (idade) +N"`, onde N é a quantidade de chaves sobrando) e `mesclar(...listas)` (junta várias listas em uma).
+@@starter
+function trocar(par) {
+}
+
+function atualizarIdade(pessoa, novaIdade) {
+}
+
+function resumo(pessoa) {
+  // use desestruturação no parâmetro
+}
+
+function mesclar(...listas) {
+}
+
+@@tests
+$t('trocar([1, 2]) = [2, 1]', () => $eq(trocar([1, 2]), [2, 1]));
+$t('atualizarIdade devolve objeto novo com a idade nova', () => {
+  const p = { nome: 'Ana', idade: 30, cidade: 'Rio' };
+  const r = atualizarIdade(p, 31);
+  $eq(r, { nome: 'Ana', idade: 31, cidade: 'Rio' });
+  $eq(p.idade, 30);
+});
+$t('resumo({ nome: "Caio" }) = "Caio (18) +0"', () => $eq(resumo({ nome: 'Caio' }), 'Caio (18) +0'));
+$t('resumo({ nome: "Bia", idade: 25, cargo: "dev", cidade: "SP" }) = "Bia (25) +2"', () => $eq(resumo({ nome: 'Bia', idade: 25, cargo: 'dev', cidade: 'SP' }), 'Bia (25) +2'));
+$t('mesclar([1], [2, 3], [4]) = [1, 2, 3, 4]', () => $eq(mesclar([1], [2, 3], [4]), [1, 2, 3, 4]));
+$t('mesclar() = []', () => $eq(mesclar(), []));
+@@hints
+- trocar: const [a, b] = par; return [b, a];
+- atualizarIdade: return { ...pessoa, idade: novaIdade };
+- Na assinatura: function resumo({ nome, idade = 18, ...resto })
+- mesclar: listas.flat() ou um laço com spread.
+@@solution
+function trocar(par) {
+  const [a, b] = par;
+  return [b, a];
+}
+
+function atualizarIdade(pessoa, novaIdade) {
+  return { ...pessoa, idade: novaIdade };
+}
+
+function resumo({ nome, idade = 18, ...resto }) {
+  return `${nome} (${idade}) +${Object.keys(resto).length}`;
+}
+
+function mesclar(...listas) {
+  return listas.flat();
+}

@@ -1,0 +1,4 @@
+node_modules/
+dist/
+src/lib.bundle.d.ts
+.DS_Store

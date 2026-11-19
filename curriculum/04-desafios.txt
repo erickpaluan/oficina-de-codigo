@@ -1,0 +1,557 @@
+@@module desafios-aquecimento | desafios | Aquecimento | Problemas clássicos para treinar o raciocínio. Use JavaScript. Dificuldade ★ a ★★.
+
+@@lesson des-fizzbuzz | FizzBuzz | 10 | 1
+@@body
+O clássico das entrevistas. Escreva `fizzBuzz(n)`, que devolve um array com os números de 1 até `n`, mas:
+
+- múltiplos de 3 viram `"Fizz"`;
+- múltiplos de 5 viram `"Buzz"`;
+- múltiplos de 3 **e** de 5 viram `"FizzBuzz"`;
+- os demais ficam como **número**.
+
+```js
+fizzBuzz(15); // [1, 2, "Fizz", 4, "Buzz", "Fizz", 7, 8, "Fizz", "Buzz", 11, "Fizz", 13, 14, "FizzBuzz"]
+```
+
+> **Pegadinha:** a ordem das verificações importa. Teste o caso "3 e 5" **antes** dos casos separados.
+@@task
+Implemente `fizzBuzz(n)`.
+@@starter
+function fizzBuzz(n) {
+}
+
+@@tests
+$t('fizzBuzz(5)', () => $eq(fizzBuzz(5), [1, 2, 'Fizz', 4, 'Buzz']));
+$t('fizzBuzz(15) termina em "FizzBuzz"', () => { const r = fizzBuzz(15); $eq(r.length, 15); $eq(r[14], 'FizzBuzz'); $eq(r[9], 'Buzz'); $eq(r[11], 'Fizz'); });
+$t('fizzBuzz(0) = []', () => $eq(fizzBuzz(0), []));
+$t('os números comuns continuam sendo números', () => $eq(typeof fizzBuzz(2)[1], 'number'));
+@@hints
+- Use % para testar múltiplos.
+- Verifique primeiro i % 15 === 0 (ou os dois testes juntos).
+@@solution
+function fizzBuzz(n) {
+  const r = [];
+  for (let i = 1; i <= n; i++) {
+    if (i % 15 === 0) r.push("FizzBuzz");
+    else if (i % 3 === 0) r.push("Fizz");
+    else if (i % 5 === 0) r.push("Buzz");
+    else r.push(i);
+  }
+  return r;
+}
+
+@@lesson des-inverter | Inverter texto e palavras | 10 | 1
+@@body
+Duas inversões diferentes:
+
+- `inverterTexto("abc")` devolve `"cba"`.
+- `inverterPalavras("o rato roeu")` devolve `"roeu rato o"`. Considere que as palavras são separadas por **um ou mais espaços** e o resultado usa **um único espaço**, sem espaços nas pontas.
+
+> **Dica:** `split`, `reverse` e `join` formam uma ótima combinação. Para tratar vários espaços, `split(" ")` deixa pedaços vazios: pense em como descartá-los.
+@@task
+Implemente `inverterTexto` e `inverterPalavras`.
+@@starter
+function inverterTexto(texto) {
+}
+
+function inverterPalavras(texto) {
+}
+
+@@tests
+$t('inverterTexto("abc") = "cba"', () => $eq(inverterTexto('abc'), 'cba'));
+$t('inverterTexto("") = ""', () => $eq(inverterTexto(''), ''));
+$t('inverterPalavras("o rato roeu")', () => $eq(inverterPalavras('o rato roeu'), 'roeu rato o'));
+$t('inverterPalavras com espaços sobrando', () => $eq(inverterPalavras('  muitos   espaços aqui '), 'aqui espaços muitos'));
+$t('inverterPalavras("") = ""', () => $eq(inverterPalavras('   '), ''));
+@@hints
+- inverterTexto: [...texto].reverse().join("")
+- inverterPalavras: texto.trim().split(/\s+/) gera as palavras; para texto vazio, cuidado: "".split(/\s+/) devolve [""].
+@@solution
+function inverterTexto(texto) {
+  return [...texto].reverse().join("");
+}
+
+function inverterPalavras(texto) {
+  const palavras = texto.split(/\s+/).filter(p => p !== "");
+  return palavras.reverse().join(" ");
+}
+
+@@lesson des-palindromo | Palíndromo | 15 | 2
+@@body
+Um **palíndromo** lê-se igual de trás para frente: "arara", "Ana", "Anotaram a data da maratona".
+
+Escreva `ehPalindromo(texto)` que devolve `true` ou `false`, **ignorando** maiúsculas, espaços, pontuação e acentos.
+
+```js
+ehPalindromo("Socorram-me, subi no ônibus em Marrocos"); // true
+ehPalindromo("javascript");                              // false
+```
+
+> **Dica:** para tirar acentos, `texto.normalize("NFD")` separa a letra do acento, e uma expressão regular remove os acentos soltos (`/[̀-ͯ]/g`). Depois, mantenha só letras e números.
+@@task
+Implemente `ehPalindromo(texto)`.
+@@starter
+function ehPalindromo(texto) {
+}
+
+@@tests
+$t('"Ana" é palíndromo', () => $eq(ehPalindromo('Ana'), true));
+$t('"javascript" não é', () => $eq(ehPalindromo('javascript'), false));
+$t('ignora espaços e pontuação', () => $eq(ehPalindromo('A man, a plan, a canal: Panama'), true));
+$t('ignora acentos', () => $eq(ehPalindromo('Socorram-me, subi no ônibus em Marrocos'), true));
+$t('texto vazio é palíndromo', () => $eq(ehPalindromo(''), true));
+$t('"abca" não é', () => $eq(ehPalindromo('abca'), false));
+@@hints
+- Normalize primeiro: tire acentos, passe para minúsculas e remova tudo que não seja letra ou número.
+- Depois compare o texto limpo com ele mesmo invertido.
+@@solution
+function ehPalindromo(texto) {
+  const limpo = texto
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+  return limpo === [...limpo].reverse().join("");
+}
+
+@@lesson des-anagrama | Anagramas | 15 | 2
+@@body
+Duas palavras são **anagramas** quando usam exatamente as mesmas letras, em outra ordem: "amor" e "roma", "listen" e "silent".
+
+Escreva `saoAnagramas(a, b)`, ignorando maiúsculas e espaços.
+
+> **Ideia:** se você ordenar as letras das duas palavras, anagramas ficam idênticos. Existe também uma solução em O(n) usando contagem de letras. Qual você prefere?
+@@task
+Implemente `saoAnagramas(a, b)`.
+@@starter
+function saoAnagramas(a, b) {
+}
+
+@@tests
+$t('"amor" e "Roma"', () => $eq(saoAnagramas('amor', 'Roma'), true));
+$t('"listen" e "silent"', () => $eq(saoAnagramas('listen', 'silent'), true));
+$t('ignora espaços: "dormitory" e "dirty room"', () => $eq(saoAnagramas('dormitory', 'dirty room'), true));
+$t('"abc" e "abd" não são', () => $eq(saoAnagramas('abc', 'abd'), false));
+$t('tamanhos diferentes', () => $eq(saoAnagramas('aab', 'ab'), false));
+$t('mesmas letras, quantidades diferentes', () => $eq(saoAnagramas('aab', 'abb'), false));
+@@hints
+- Normalize: minúsculas e sem espaços.
+- Ordene as letras de cada uma ([...s].sort().join("")) e compare.
+@@solution
+function saoAnagramas(a, b) {
+  const norm = (s) => [...s.toLowerCase().replaceAll(" ", "")].sort().join("");
+  return norm(a) === norm(b);
+}
+
+@@lesson des-contar-palavras | Frequência de palavras | 20 | 2
+@@body
+Escreva `contarPalavras(texto)`, que devolve um objeto com a quantidade de vezes que cada palavra aparece. Ignore maiúsculas e a pontuação `. , ; : ! ?`.
+
+```js
+contarPalavras("O gato e o rato. O rato fugiu!");
+// { o: 3, gato: 1, e: 1, rato: 2, fugiu: 1 }
+```
+
+Um texto vazio devolve `{}`.
+@@task
+Implemente `contarPalavras(texto)`.
+@@starter
+function contarPalavras(texto) {
+}
+
+@@tests
+$t('exemplo do enunciado', () => $eq(contarPalavras('O gato e o rato. O rato fugiu!'), { o: 3, gato: 1, e: 1, rato: 2, fugiu: 1 }));
+$t('texto vazio = {}', () => $eq(contarPalavras(''), {}));
+$t('ignora caixa e pontuação', () => $eq(contarPalavras('Sim, sim; SIM?'), { sim: 3 }));
+$t('várias palavras distintas', () => $eq(contarPalavras('um dois três'), { um: 1, dois: 1, 'três': 1 }));
+@@hints
+- Remova a pontuação com replace(/[.,;:!?]/g, "") e passe para minúsculas.
+- Quebre em palavras com split(/\s+/), descartando vazios.
+- Acumule em um objeto: cont[p] = (cont[p] ?? 0) + 1
+@@solution
+function contarPalavras(texto) {
+  const palavras = texto
+    .toLowerCase()
+    .replace(/[.,;:!?]/g, "")
+    .split(/\s+/)
+    .filter(p => p !== "");
+  const cont = {};
+  for (const p of palavras) cont[p] = (cont[p] ?? 0) + 1;
+  return cont;
+}
+
+@@module desafios-intermediario | desafios | Intermediário | Exigem escolher a estrutura de dados certa e pensar em eficiência. Dificuldade ★★★.
+
+@@lesson des-fibonacci | Fibonacci eficiente | 20 | 3
+@@body
+Na sequência de Fibonacci, cada número é a soma dos dois anteriores: `0, 1, 1, 2, 3, 5, 8, 13, ...`
+
+`fibonacci(0) = 0`, `fibonacci(1) = 1`, `fibonacci(10) = 55`.
+
+A definição recursiva direta (`fib(n-1) + fib(n-2)`) refaz os mesmos cálculos milhões de vezes e fica lenta já em `n = 40`. Seu desafio é fazer `fibonacci(70)` responder **instantaneamente**.
+
+> **Caminhos:** um laço que guarda só os dois últimos valores (O(n)), ou recursão com **memoização** (guardar resultados já calculados).
+@@task
+Implemente `fibonacci(n)`.
+@@starter
+function fibonacci(n) {
+}
+
+@@tests
+$t('fibonacci(0) = 0 e fibonacci(1) = 1', () => { $eq(fibonacci(0), 0); $eq(fibonacci(1), 1); });
+$t('fibonacci(10) = 55', () => $eq(fibonacci(10), 55));
+$t('fibonacci(50) = 12586269025', () => $eq(fibonacci(50), 12586269025));
+$t('fibonacci(70) = 190392490709135 rapidamente', () => $eq(fibonacci(70), 190392490709135), 3000);
+@@hints
+- Guarde só dois valores: anterior e atual. Em cada volta, calcule o próximo.
+- let a = 0, b = 1; for (let i = 0; i < n; i++) [a, b] = [b, a + b]; return a;
+@@solution
+function fibonacci(n) {
+  let a = 0;
+  let b = 1;
+  for (let i = 0; i < n; i++) {
+    [a, b] = [b, a + b];
+  }
+  return a;
+}
+
+@@lesson des-primos | Crivo de Eratóstenes | 25 | 3
+@@body
+Um número **primo** só é divisível por 1 e por ele mesmo: 2, 3, 5, 7, 11...
+
+Escreva `primosAte(n)`, que devolve o array de todos os primos de 2 até `n`. Para `n = 30`: `[2, 3, 5, 7, 11, 13, 17, 19, 23, 29]`.
+
+Testar a divisibilidade de cada número por todos os anteriores é lento. O **Crivo de Eratóstenes** (cerca de 240 a.C.) é muito mais eficiente: liste os números, e para cada primo encontrado **risque seus múltiplos**.
+
+> Os testes pedem os primos até **2 milhões**. Uma solução ingênua não vai terminar a tempo.
+@@task
+Implemente `primosAte(n)`.
+@@starter
+function primosAte(n) {
+}
+
+@@tests
+$t('primosAte(30)', () => $eq(primosAte(30), [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]));
+$t('primosAte(1) = [] e primosAte(2) = [2]', () => { $eq(primosAte(1), []); $eq(primosAte(2), [2]); });
+$t('primosAte(100) tem 25 primos', () => $eq(primosAte(100).length, 25));
+$t('primosAte(2000000) tem 148933 primos', () => $eq(primosAte(2000000).length, 148933), 6000);
+@@hints
+- Crie um array de booleanos "ehPrimo" com n + 1 posições, todas true (menos 0 e 1).
+- Para cada i de 2 até sqrt(n): se ehPrimo[i], marque como false os múltiplos i*i, i*i + i, ...
+- No fim, colete os índices que continuam true.
+@@solution
+function primosAte(n) {
+  if (n < 2) return [];
+  const ehPrimo = new Array(n + 1).fill(true);
+  ehPrimo[0] = ehPrimo[1] = false;
+  for (let i = 2; i * i <= n; i++) {
+    if (ehPrimo[i]) {
+      for (let j = i * i; j <= n; j += i) ehPrimo[j] = false;
+    }
+  }
+  const primos = [];
+  for (let i = 2; i <= n; i++) if (ehPrimo[i]) primos.push(i);
+  return primos;
+}
+
+@@lesson des-dois-numeros | Dois números que somam o alvo | 25 | 3
+@@body
+Dada uma lista de números e um `alvo`, encontre **dois itens diferentes** cuja soma seja o alvo. Devolva os **índices** `[i, j]` (com `i < j`), ou `null` se não existir.
+
+```js
+doisNumeros([2, 7, 11, 15], 9);   // [0, 1], porque 2 + 7 = 9
+doisNumeros([3, 3], 6);           // [0, 1]
+doisNumeros([1, 2], 10);          // null
+```
+
+A solução óbvia (dois laços, comparando todos os pares) é O(n²). Os testes usam **200 mil** itens.
+
+> **Ideia:** ao ver um número `x`, você precisa saber se `alvo - x` já apareceu antes. Que estrutura responde isso em tempo constante?
+@@task
+Implemente `doisNumeros(lista, alvo)`.
+@@starter
+function doisNumeros(lista, alvo) {
+}
+
+@@tests
+$t('[2, 7, 11, 15] com alvo 9', () => $eq(doisNumeros([2, 7, 11, 15], 9), [0, 1]));
+$t('valores repetidos: [3, 3] com alvo 6', () => $eq(doisNumeros([3, 3], 6), [0, 1]));
+$t('sem solução devolve null', () => $eq(doisNumeros([1, 2], 10), null));
+$t('não usa o mesmo item duas vezes', () => $eq(doisNumeros([5], 10), null));
+$t('negativos: [-3, 4, 3, 90] com alvo 0', () => $eq(doisNumeros([-3, 4, 3, 90], 0), [0, 2]));
+$t('200 mil itens (precisa ser O(n))', () => {
+  const l = Array.from({ length: 200000 }, (_, i) => i * 2);
+  const r = doisNumeros(l, 399998 + 1);
+  $eq(r, null);
+  const r2 = doisNumeros(l, l[199998] + l[199999]);
+  $eq(r2, [199998, 199999]);
+}, 6000);
+@@hints
+- Use um Map de valor → índice, preenchido enquanto percorre a lista.
+- Para cada item x no índice j: se mapa.has(alvo - x), a resposta é [mapa.get(alvo - x), j].
+@@solution
+function doisNumeros(lista, alvo) {
+  const vistos = new Map();
+  for (let j = 0; j < lista.length; j++) {
+    const faltando = alvo - lista[j];
+    if (vistos.has(faltando)) return [vistos.get(faltando), j];
+    vistos.set(lista[j], j);
+  }
+  return null;
+}
+
+@@lesson des-parenteses | Parênteses balanceados | 25 | 3
+@@body
+Escreva `balanceado(texto)`, que verifica se os pares `()`, `[]` e `{}` estão corretamente abertos e fechados, na ordem certa. Outros caracteres são ignorados.
+
+```js
+balanceado("(a + b) * [c - {d}]");  // true
+balanceado("(]");                    // false
+balanceado("((");                    // false
+balanceado("())(");                  // false
+```
+
+> **Ideia:** a estrutura certa é uma **pilha**. Ao abrir, empilhe. Ao fechar, o topo da pilha precisa ser o par correspondente.
+@@task
+Implemente `balanceado(texto)`.
+@@starter
+function balanceado(texto) {
+}
+
+@@tests
+$t('expressão correta', () => $eq(balanceado('(a + b) * [c - {d}]'), true));
+$t('texto sem parênteses é balanceado', () => $eq(balanceado('abc'), true));
+$t('tipos misturados "(]"', () => $eq(balanceado('(]'), false));
+$t('abertura sem fechamento "(("', () => $eq(balanceado('(('), false));
+$t('fechamento sem abertura ")"', () => $eq(balanceado(')'), false));
+$t('ordem errada "())("', () => $eq(balanceado('())('), false));
+$t('aninhamento "{[()]}"', () => $eq(balanceado('{[()]}'), true));
+$t('cruzado "{[}]"', () => $eq(balanceado('{[}]'), false));
+@@hints
+- Use um array como pilha (push/pop) e um objeto que mapeia fechamento → abertura.
+- Se aparecer um fechamento e a pilha estiver vazia, já é false.
+- No final, a pilha precisa estar vazia.
+@@solution
+function balanceado(texto) {
+  const pares = { ")": "(", "]": "[", "}": "{" };
+  const pilha = [];
+  for (const c of texto) {
+    if ("([{".includes(c)) {
+      pilha.push(c);
+    } else if (c in pares) {
+      if (pilha.pop() !== pares[c]) return false;
+    }
+  }
+  return pilha.length === 0;
+}
+
+@@lesson des-comprimir | Compressão de texto | 25 | 3
+@@body
+Implemente uma compressão simples (RLE, *run-length encoding*): sequências repetidas viram **letra + quantidade**. Letras que aparecem sozinhas ficam sem número.
+
+```js
+comprimir("aaabccdddd");   // "a3bc2d4"
+descomprimir("a3bc2d4");   // "aaabccdddd"
+```
+
+Considere que o texto original contém **apenas letras**.
+@@task
+Implemente `comprimir(texto)` e `descomprimir(codigo)`.
+@@starter
+function comprimir(texto) {
+}
+
+function descomprimir(codigo) {
+}
+
+@@tests
+$t('comprimir("aaabccdddd") = "a3bc2d4"', () => $eq(comprimir('aaabccdddd'), 'a3bc2d4'));
+$t('comprimir("abc") = "abc"', () => $eq(comprimir('abc'), 'abc'));
+$t('comprimir("") = ""', () => $eq(comprimir(''), ''));
+$t('comprimir("zzzzzzzzzzzz") = "z12" (dois dígitos)', () => $eq(comprimir('zzzzzzzzzzzz'), 'z12'));
+$t('descomprimir("a3bc2d4")', () => $eq(descomprimir('a3bc2d4'), 'aaabccdddd'));
+$t('descomprimir("z12")', () => $eq(descomprimir('z12'), 'zzzzzzzzzzzz'));
+$t('ida e volta', () => { const t = 'aabcccccaaa'; $eq(descomprimir(comprimir(t)), t); });
+@@hints
+- comprimir: percorra contando quantas vezes a letra atual se repete seguidamente; ao mudar de letra, acrescente a letra e, se a contagem for maior que 1, o número.
+- descomprimir: uma expressão regular /([a-zA-Z])(\d*)/g encontra cada letra com seu número (que pode estar vazio). Use replace com função, e repeat().
+@@solution
+function comprimir(texto) {
+  let r = "";
+  let i = 0;
+  while (i < texto.length) {
+    let j = i;
+    while (j < texto.length && texto[j] === texto[i]) j++;
+    const qtd = j - i;
+    r += texto[i] + (qtd > 1 ? qtd : "");
+    i = j;
+  }
+  return r;
+}
+
+function descomprimir(codigo) {
+  return codigo.replace(/([a-zA-Z])(\d*)/g, (_, letra, n) => letra.repeat(n === "" ? 1 : Number(n)));
+}
+
+@@module desafios-avancado | desafios | Avançado | Problemas de entrevista de nível sênior. Dificuldade ★★★★ a ★★★★★.
+
+@@lesson des-romanos | Números romanos | 30 | 4
+@@body
+Converta entre inteiros (1 a 3999) e algarismos romanos.
+
+Valores básicos: `I=1, V=5, X=10, L=50, C=100, D=500, M=1000`. A subtração acontece em seis casos: `IV=4, IX=9, XL=40, XC=90, CD=400, CM=900`.
+
+```js
+paraRomano(1994);   // "MCMXCIV"
+deRomano("MCMXCIV"); // 1994
+```
+
+> **Ideia para `paraRomano`:** tenha uma tabela ordenada do maior para o menor valor, incluindo os casos de subtração (`900 → "CM"`), e vá "gastando" o número.
+@@task
+Implemente `paraRomano(n)` e `deRomano(texto)`.
+@@starter
+function paraRomano(n) {
+}
+
+function deRomano(texto) {
+}
+
+@@tests
+$t('paraRomano: 4, 9, 14, 40', () => { $eq(paraRomano(4), 'IV'); $eq(paraRomano(9), 'IX'); $eq(paraRomano(14), 'XIV'); $eq(paraRomano(40), 'XL'); });
+$t('paraRomano(1994) = "MCMXCIV"', () => $eq(paraRomano(1994), 'MCMXCIV'));
+$t('paraRomano(2024) = "MMXXIV"', () => $eq(paraRomano(2024), 'MMXXIV'));
+$t('paraRomano(3999) = "MMMCMXCIX"', () => $eq(paraRomano(3999), 'MMMCMXCIX'));
+$t('deRomano("XLII") = 42', () => $eq(deRomano('XLII'), 42));
+$t('deRomano("MCMXCIV") = 1994', () => $eq(deRomano('MCMXCIV'), 1994));
+$t('ida e volta de 1 a 3999', () => { for (let i = 1; i <= 3999; i++) { if (deRomano(paraRomano(i)) !== i) throw new Error('falhou para ' + i); } });
+@@hints
+- Tabela: [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]]
+- paraRomano: para cada par, enquanto n >= valor, acrescente o símbolo e subtraia.
+- deRomano: percorra da esquerda; se o valor atual é menor que o próximo, subtraia; senão, some.
+@@solution
+const TABELA = [[1000,"M"],[900,"CM"],[500,"D"],[400,"CD"],[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];
+
+function paraRomano(n) {
+  let r = "";
+  for (const [valor, simbolo] of TABELA) {
+    while (n >= valor) {
+      r += simbolo;
+      n -= valor;
+    }
+  }
+  return r;
+}
+
+function deRomano(texto) {
+  const v = { I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000 };
+  let total = 0;
+  for (let i = 0; i < texto.length; i++) {
+    const atual = v[texto[i]];
+    const prox = v[texto[i + 1]] ?? 0;
+    total += atual < prox ? -atual : atual;
+  }
+  return total;
+}
+
+@@lesson des-intervalos | Mesclar intervalos | 30 | 4
+@@body
+Dada uma lista de intervalos `[inicio, fim]`, una os que se sobrepõem ou se tocam.
+
+```js
+mesclarIntervalos([[1, 3], [2, 6], [8, 10], [15, 18]]);
+// [[1, 6], [8, 10], [15, 18]]
+
+mesclarIntervalos([[1, 4], [4, 5]]);
+// [[1, 5]]  (intervalos que se tocam também se unem)
+```
+
+A lista pode vir **fora de ordem**. Não altere a lista recebida nem seus intervalos.
+
+> **Ideia:** se você **ordenar** pelos inícios, intervalos que se sobrepõem ficam vizinhos. Aí basta uma passada, comparando cada um com o último intervalo já mesclado.
+@@task
+Implemente `mesclarIntervalos(intervalos)`.
+@@starter
+function mesclarIntervalos(intervalos) {
+}
+
+@@tests
+$t('exemplo do enunciado', () => $eq(mesclarIntervalos([[1, 3], [2, 6], [8, 10], [15, 18]]), [[1, 6], [8, 10], [15, 18]]));
+$t('intervalos que se tocam', () => $eq(mesclarIntervalos([[1, 4], [4, 5]]), [[1, 5]]));
+$t('fora de ordem', () => $eq(mesclarIntervalos([[8, 10], [1, 3], [2, 6]]), [[1, 6], [8, 10]]));
+$t('um intervalo contido em outro', () => $eq(mesclarIntervalos([[1, 10], [2, 3], [4, 5]]), [[1, 10]]));
+$t('lista vazia', () => $eq(mesclarIntervalos([]), []));
+$t('não altera a entrada', () => {
+  const entrada = [[5, 6], [1, 5]];
+  mesclarIntervalos(entrada);
+  $eq(entrada, [[5, 6], [1, 5]]);
+});
+@@hints
+- Ordene uma cópia pelos inícios: [...intervalos].sort((a, b) => a[0] - b[0]).
+- Mantenha um array resultado. Para cada intervalo, se ele começa antes (ou quando) o último termina, estenda o fim do último com Math.max; senão, acrescente um novo.
+- Copie os intervalos ([a, b]) antes de guardar no resultado, para não mudar a entrada.
+@@solution
+function mesclarIntervalos(intervalos) {
+  const ordenados = [...intervalos].sort((a, b) => a[0] - b[0]);
+  const resultado = [];
+  for (const [ini, fim] of ordenados) {
+    const ultimo = resultado.at(-1);
+    if (ultimo && ini <= ultimo[1]) {
+      ultimo[1] = Math.max(ultimo[1], fim);
+    } else {
+      resultado.push([ini, fim]);
+    }
+  }
+  return resultado;
+}
+
+@@lesson des-substring | Maior trecho sem repetição | 35 | 5
+@@body
+Dada uma string, encontre o **comprimento do maior trecho contínuo sem caracteres repetidos**.
+
+```js
+maiorSemRepeticao("abcabcbb");  // 3  ("abc")
+maiorSemRepeticao("bbbbb");     // 1
+maiorSemRepeticao("pwwkew");    // 3  ("wke")
+maiorSemRepeticao("");          // 0
+```
+
+A solução de força bruta testa todos os trechos: O(n²) ou pior. Os testes usam uma string com **50 mil** caracteres distintos.
+
+> **Técnica: janela deslizante** (*sliding window*). Mantenha uma janela `[inicio, fim]` sem repetições. Avance o `fim`; se o caractere novo já está na janela, mova o `inicio` para depois da última ocorrência dele. Guarde em um `Map` a última posição de cada caractere.
+@@task
+Implemente `maiorSemRepeticao(texto)`.
+@@starter
+function maiorSemRepeticao(texto) {
+}
+
+@@tests
+$t('"abcabcbb" = 3', () => $eq(maiorSemRepeticao('abcabcbb'), 3));
+$t('"bbbbb" = 1', () => $eq(maiorSemRepeticao('bbbbb'), 1));
+$t('"pwwkew" = 3', () => $eq(maiorSemRepeticao('pwwkew'), 3));
+$t('"dvdf" = 3', () => $eq(maiorSemRepeticao('dvdf'), 3));
+$t('"" = 0 e "a" = 1', () => { $eq(maiorSemRepeticao(''), 0); $eq(maiorSemRepeticao('a'), 1); });
+$t('"abba" = 2 (cuidado com o início da janela)', () => $eq(maiorSemRepeticao('abba'), 2));
+$t('50 mil caracteres distintos (precisa ser O(n))', () => {
+  let s = '';
+  for (let i = 0; i < 50000; i++) s += String.fromCharCode(0x100 + i);
+  $eq(maiorSemRepeticao(s), 50000);
+}, 6000);
+@@hints
+- Guarde ultimaPosicao em um Map: caractere → índice onde apareceu pela última vez.
+- Ao ver um caractere c no índice i: se ele já apareceu em uma posição >= inicio, faça inicio = ultimaPosicao.get(c) + 1.
+- A cada passo, atualize o melhor com i - inicio + 1. Em "abba", o segundo "a" aparece fora da janela atual: não pode recuar o início.
+@@solution
+function maiorSemRepeticao(texto) {
+  const ultima = new Map();
+  let inicio = 0;
+  let melhor = 0;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    if (ultima.has(c) && ultima.get(c) >= inicio) {
+      inicio = ultima.get(c) + 1;
+    }
+    ultima.set(c, i);
+    melhor = Math.max(melhor, i - inicio + 1);
+  }
+  return melhor;
+}

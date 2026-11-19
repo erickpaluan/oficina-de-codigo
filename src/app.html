@@ -1,0 +1,726 @@
+<title>Oficina de Código</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: barra lateral com a trilha + coluna de lição (explicação | editor). Verde-petróleo como acento, uma cor de identidade por trilha. */
+:root {
+  --bg: #F3F6F4; --surface: #FFFFFF; --surface2: #E9EEEB; --line: #D3DCD7;
+  --ink: #14211D; --ink2: #4F5F58; --acc: #0A7660; --acc-ink: #FFFFFF; --acc-soft: #D5EDE5;
+  --ok: #11743B; --ok-soft: #DCF2E4; --bad: #B3261E; --bad-soft: #FBE6E3; --warn: #7A5200; --warn-soft: #FAEFD0;
+  --js: #8A6500; --js-bg: #FBF0C6; --ts: #1F5FA6; --ts-bg: #DCE8F7; --des: #0A7660; --des-bg: #D5EDE5;
+  --code-bg: #EEF2F0; --ed-bg: #FBFCFB; --sel: rgba(10, 118, 96, .22);
+  --s-k: #A0246B; --s-s: #0B6B3A; --s-n: #A24A00; --s-c: #75837C; --s-f: #1D5FA8; --s-t: #7A5C00; --s-b: #5B4BB5; --s-l: #A24A00;
+  --f-display: "Space Grotesk", system-ui, sans-serif; --f-body: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0D1311; --surface: #141C19; --surface2: #1C2723; --line: #2A3732;
+  --ink: #E5EEEA; --ink2: #9CABA4; --acc: #3DD6AE; --acc-ink: #05211A; --acc-soft: #12362C;
+  --ok: #52DB86; --ok-soft: #123423; --bad: #FF8A80; --bad-soft: #3B1815; --warn: #F2C45A; --warn-soft: #34290D;
+  --js: #F2C94C; --js-bg: #342A0A; --ts: #7CB2F2; --ts-bg: #12263F; --des: #3DD6AE; --des-bg: #12362C;
+  --code-bg: #1A2420; --ed-bg: #111917; --sel: rgba(61, 214, 174, .28);
+  --s-k: #F58BC4; --s-s: #7FDB9F; --s-n: #F5A15E; --s-c: #6F8279; --s-f: #82B8F5; --s-t: #E8C36A; --s-b: #B7A8F5; --s-l: #F5A15E;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0D1311; --surface: #141C19; --surface2: #1C2723; --line: #2A3732;
+  --ink: #E5EEEA; --ink2: #9CABA4; --acc: #3DD6AE; --acc-ink: #05211A; --acc-soft: #12362C;
+  --ok: #52DB86; --ok-soft: #123423; --bad: #FF8A80; --bad-soft: #3B1815; --warn: #F2C45A; --warn-soft: #34290D;
+  --js: #F2C94C; --js-bg: #342A0A; --ts: #7CB2F2; --ts-bg: #12263F; --des: #3DD6AE; --des-bg: #12362C;
+  --code-bg: #1A2420; --ed-bg: #111917; --sel: rgba(61, 214, 174, .28);
+  --s-k: #F58BC4; --s-s: #7FDB9F; --s-n: #F5A15E; --s-c: #6F8279; --s-f: #82B8F5; --s-t: #E8C36A; --s-b: #B7A8F5; --s-l: #F5A15E;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+a { color: var(--acc); }
+.shell { max-width: 1600px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px 48px; }
+.top { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 19px/1 var(--f-display); text-decoration: none; color: var(--ink); letter-spacing: -.01em; background: none; border: 0; cursor: pointer; padding: 4px 0; }
+.brand .mark { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--acc); color: var(--acc-ink); font: 700 14px var(--f-mono); }
+.spacer { flex: 1; }
+.mini-prog { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink2); white-space: nowrap; }
+.mini-prog .short { display: none; }
+.brand { white-space: nowrap; }
+.mini-prog .bar { width: 120px; }
+.bar { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--acc); border-radius: 99px; }
+.icon-btn { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; color: var(--ink); }
+.icon-btn:hover { background: var(--surface2); }
+.menu-btn { display: none; }
+.side-close { display: none; margin-bottom: 10px; }
+.main { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 28px; align-items: start; }
+.side { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--surface2); border-radius: 10px; padding: 4px; margin-bottom: 10px; }
+.tab { border: 0; background: none; border-radius: 7px; padding: 6px 2px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--ink2); line-height: 1.25; }
+.tab small { display: block; font-weight: 400; font-size: 11px; }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.mod { border-top: 1px solid var(--line); }
+.mod:first-of-type { border-top: 0; }
+.mod summary { list-style: none; cursor: pointer; padding: 9px 4px; display: flex; gap: 8px; align-items: baseline; font-weight: 600; font-size: 13.5px; }
+.mod summary::-webkit-details-marker { display: none; }
+.mod summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink2); border-bottom: 2px solid var(--ink2); transform: rotate(-45deg); flex: none; margin-right: 2px; transition: transform .15s; }
+.mod[open] summary::before { transform: rotate(45deg); }
+.mod summary .cnt { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.mod ul { list-style: none; margin: 0 0 8px; padding: 0; }
+.lnk { display: flex; gap: 9px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; text-decoration: none; color: var(--ink); font-size: 13.5px; line-height: 1.35; }
+.lnk:hover { background: var(--surface2); }
+.lnk.cur { background: var(--acc-soft); font-weight: 600; }
+.dot { flex: none; width: 16px; height: 16px; margin-top: 1px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; color: var(--acc-ink); }
+.dot svg { width: 10px; height: 10px; display: none; }
+.lnk.done .dot { background: var(--acc); border-color: var(--acc); }
+.lnk.done .dot svg { display: block; }
+.stars { color: var(--warn); letter-spacing: 1px; font-size: 11px; margin-left: auto; white-space: nowrap; }
+.view { min-width: 0; }
+h1, h2, h3, h4 { font-family: var(--f-display); letter-spacing: -.01em; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(26px, 3.4vw, 36px); margin: 4px 0 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.card h2 { font-size: 16px; margin: 0 0 8px; }
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; }
+.chip.js { background: var(--js-bg); color: var(--js); } .chip.ts { background: var(--ts-bg); color: var(--ts); } .chip.desafios { background: var(--des-bg); color: var(--des); }
+.crumbs { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 13px; color: var(--ink2); }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.cols.single { grid-template-columns: minmax(0, 78ch); }
+.explain { padding: 6px 2px; }
+.work { display: grid; gap: 14px; min-width: 0; }
+.md > :first-child { margin-top: 0; }
+.md p { margin: 0 0 12px; max-width: 72ch; }
+.md h2, .md h3 { margin: 24px 0 8px; } .md h3 { font-size: 18px; } .md h2 { font-size: 22px; }
+.md ul, .md ol { margin: 0 0 12px; padding-left: 22px; max-width: 72ch; } .md li { margin: 3px 0; }
+.md code { font: 500 .88em var(--f-mono); background: var(--code-bg); padding: 1px 5px; border-radius: 5px; }
+.md blockquote { margin: 0 0 14px; padding: 10px 14px; background: var(--surface2); border-radius: 10px; max-width: 72ch; }
+.md blockquote p { margin: 0; }
+.tbl { overflow-x: auto; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 10px; }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.tbl th, .tbl td { text-align: left; padding: 7px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl th { background: var(--surface2); font-weight: 600; } .tbl tr:last-child td { border-bottom: 0; }
+.cb { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0 0 14px; background: var(--ed-bg); }
+.cb-bar { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--surface2); font: 500 12px var(--f-mono); color: var(--ink2); }
+.code, .hl, .ta { font: 400 13.5px/1.65 var(--f-mono); tab-size: 2; letter-spacing: 0; white-space: pre; margin: 0; }
+pre.code { padding: 11px 14px; overflow-x: auto; }
+.code code { font: inherit; background: none; padding: 0; }
+.t-k { color: var(--s-k); } .t-s { color: var(--s-s); } .t-n { color: var(--s-n); } .t-c { color: var(--s-c); font-style: italic; } .t-f { color: var(--s-f); } .t-t { color: var(--s-t); } .t-b { color: var(--s-b); } .t-l { color: var(--s-l); }
+.ed-scroll { display: flex; max-height: min(66vh, 620px); min-height: 120px; overflow: auto; background: var(--ed-bg); }
+.gut { flex: none; position: sticky; left: 0; z-index: 2; background: var(--surface2); color: var(--ink2); text-align: right; padding: 11px 8px 11px 10px; font: 400 13.5px/1.65 var(--f-mono); user-select: none; min-width: 38px; }
+.gut div.err { color: var(--bad); font-weight: 700; }
+.ed-main { position: relative; flex: 1 0 auto; min-width: 0; }
+.ed-main .hl { padding: 11px 16px 11px 12px; min-width: 100%; pointer-events: none; }
+.ta { position: absolute; inset: 0; width: 100%; height: 100%; padding: 11px 16px 11px 12px; border: 0; outline: 0; resize: none; overflow: hidden; background: transparent; color: transparent; caret-color: var(--ink); }
+.ta::selection { background: var(--sel); color: transparent; }
+.ed:focus-within { box-shadow: 0 0 0 2px var(--acc); }
+.ed { border-radius: 0 0 12px 12px; overflow: hidden; }
+.ed-top { display: flex; align-items: center; gap: 8px; padding: 7px 12px; background: var(--surface2); border-radius: 12px 12px 0 0; font: 500 12px var(--f-mono); color: var(--ink2); border: 1px solid var(--line); border-bottom: 0; }
+.edcard { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.edcard .ed-top { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.edcard .ed { border-radius: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
+.btn { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 9px; padding: 8px 14px; font-weight: 600; font-size: 13.5px; cursor: pointer; text-decoration: none; line-height: 1.2; }
+.btn:hover { background: var(--surface2); }
+.btn.primary { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); } .btn.primary:hover { filter: brightness(1.08); }
+.btn.sm { padding: 4px 10px; font-size: 12.5px; border-radius: 7px; } .btn.ghost { background: transparent; border-color: transparent; color: var(--ink2); } .btn.ghost:hover { background: var(--surface); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn svg { width: 13px; height: 13px; }
+:where(button, a, input, summary, .ta):focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+kbd { font: 500 11px var(--f-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--surface); color: var(--ink2); }
+.btn.primary kbd { background: transparent; color: inherit; border-color: currentColor; opacity: .85; }
+.out { padding: 9px 12px; background: var(--ed-bg); border-top: 1px solid var(--line); font: 400 13px/1.55 var(--f-mono); max-height: 260px; overflow: auto; }
+.out .line { white-space: pre-wrap; overflow-wrap: anywhere; } .out .warn { color: var(--warn); } .out .error { color: var(--bad); } .out .dim { color: var(--ink2); font-style: italic; }
+.res { overflow: hidden; padding: 0; }
+.res-h { display: flex; align-items: center; gap: 10px; padding: 11px 14px; font-weight: 600; }
+.res-h.ok { background: var(--ok-soft); color: var(--ok); } .res-h.bad { background: var(--bad-soft); color: var(--bad); } .res-h.run { background: var(--surface2); }
+.res-b { padding: 6px 14px 12px; }
+.row { display: flex; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; align-items: flex-start; }
+.row:last-child { border-bottom: 0; }
+.row .mk { flex: none; width: 18px; font-weight: 700; } .row.ok .mk { color: var(--ok); } .row.bad .mk { color: var(--bad); }
+.row .tag { font: 500 10.5px var(--f-mono); background: var(--ts-bg); color: var(--ts); padding: 0 6px; border-radius: 5px; margin-right: 6px; }
+.row pre { margin: 5px 0 0; padding: 8px 10px; background: var(--bad-soft); color: var(--ink); border-radius: 8px; font: 400 12.5px/1.5 var(--f-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.sec-t { font: 600 12px var(--f-body); text-transform: uppercase; letter-spacing: .06em; color: var(--ink2); margin: 12px 0 4px; }
+.banner { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 12px 14px; background: var(--ok-soft); border-radius: 12px; color: var(--ok); font-weight: 600; }
+.hint-box { background: var(--warn-soft); border-radius: 12px; padding: 12px 16px; }
+.hint-box h2 { color: var(--warn); font-size: 16px; margin: 0 0 6px; } .hint-box ol { margin: 0; padding-left: 20px; } .hint-box li { margin: 4px 0; }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; background: var(--warn-soft); padding: 10px 12px; border-radius: 10px; font-size: 13.5px; }
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+.tutor h2 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; } .tutor h2 small { font: 400 12.5px var(--f-body); color: var(--ink2); }
+.tutor .acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.ask { display: flex; gap: 8px; margin: 8px 0; } .ask input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--ed-bg); border-radius: 9px; padding: 8px 12px; }
+.thread { display: grid; gap: 10px; margin-top: 10px; }
+.msg.u { justify-self: end; max-width: 90%; background: var(--acc-soft); padding: 8px 12px; border-radius: 12px; font-size: 14px; }
+.msg.a { background: var(--surface2); padding: 12px 14px; border-radius: 12px; font-size: 14.5px; }
+.msg.a .md p, .msg.a .md ul, .msg.a .md ol { max-width: none; }
+.msg.a .md > :last-child { margin-bottom: 0; }
+.note { font-size: 12.5px; color: var(--ink2); margin: 8px 0 0; }
+.hero { padding: 18px 0 8px; max-width: 820px; } .hero p { font-size: 17px; color: var(--ink2); margin: 0 0 18px; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.tracks { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin: 22px 0; }
+.tracks .card { display: grid; gap: 10px; align-content: start; } .tracks h2 { font-size: 20px; margin: 0; } .tracks p { margin: 0; color: var(--ink2); font-size: 14px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.steps { margin: 0; padding-left: 20px; } .steps li { margin: 8px 0; }
+.road { list-style: none; margin: 0; padding: 0; } .road li { padding: 5px 0; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: baseline; font-size: 14px; } .road li:last-child { border: 0; }
+.road a { color: var(--ink); text-decoration: none; font-weight: 500; } .road a:hover { color: var(--acc); }
+.road .n { margin-left: auto; font-size: 12px; color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.road .tr { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink2); margin-top: 8px; display: block; border: 0; }
+textarea.bk { width: 100%; min-height: 90px; border: 1px solid var(--line); border-radius: 9px; background: var(--ed-bg); padding: 8px 10px; font: 12px var(--f-mono); }
+.muted { color: var(--ink2); }
+@media (max-width: 1180px) { .cols { grid-template-columns: minmax(0, 1fr); } .cols.single { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 920px) {
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .menu-btn { display: inline-grid; }
+  .side { display: none; position: fixed; z-index: 50; inset: 0; max-height: none; border-radius: 0; padding: calc(12px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left, 0px)); }
+  .side.open { display: block; }
+  .side-close { display: inline-flex; }
+  .mini-prog .bar { display: none; }
+  .mini-prog .long { display: none; } .mini-prog .short { display: inline; }
+  .brand { font-size: 17px; }
+}
+@media (pointer: coarse) { .ta, .hl, .gut, .code { font-size: 14px; } .ask input { font-size: 16px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="shell">
+  <header class="top">
+    <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Abrir índice das lições"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button class="brand" type="button" data-go="inicio"><span class="mark">{}</span>Oficina de Código</button>
+    <span class="spacer"></span>
+    <div class="mini-prog" id="miniProg"></div>
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="Alternar tema claro e escuro"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  </header>
+  <div class="main">
+    <aside class="side" id="side" aria-label="Índice das lições"></aside>
+    <main class="view" id="view"></main>
+  </div>
+</div>
+
+<script id="data" type="application/json">/*__DATA__*/</script>
+<script>/*__TSCHECK__*/</script>
+<script>
+(() => {
+'use strict';
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const { tracks, modules, lessons } = DATA.curriculum;
+const byId = Object.fromEntries(lessons.map((l) => [l.id, l]));
+const TS_URL = 'https://cdn.jsdelivr.net/npm/typescript@5.6.3/lib/typescript.js';
+const PARAMS = ['console', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', '$t', '$eq', '$ok', '$lanca', '$perto', '$congelar', '$esperar', '$logs'];
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const tick = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5.5"/></svg>';
+const playIc = '<svg viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.8v8.4L10 6z"/></svg>';
+const isMac = /Mac|iPhone|iPad/.test(navigator.platform || '');
+const mod = isMac ? '⌘' : 'Ctrl';
+
+/* ---------- estado salvo (só neste navegador) ---------- */
+const KEY = 'oficina-codigo-v1';
+let S = (() => { try { const r = JSON.parse(localStorage.getItem(KEY)); if (r && r.v === 1) return r; } catch (e) {} return { v: 1, L: {}, last: null }; })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const st = (id) => S.L[id] || (S.L[id] = {});
+const isDone = (id) => !!(S.L[id] && S.L[id].done);
+const lessonsOf = (t) => lessons.filter((l) => l.track === t);
+const doneCount = (arr) => arr.filter((l) => isDone(l.id)).length;
+
+/* ---------- realce de sintaxe ---------- */
+const KW = new Set('const let var function return if else for while do break continue switch case default new class extends super this typeof instanceof in of await async yield throw try catch finally import export from as delete void static get set'.split(' '));
+const TSKW = new Set('type interface enum implements private public protected readonly abstract declare namespace keyof infer is satisfies unique asserts'.split(' '));
+const TYP = new Set('string number boolean bigint symbol object unknown any never'.split(' '));
+const LIT = new Set('true false null undefined NaN Infinity'.split(' '));
+const BUI = new Set('console Math JSON Object Array Promise Map Set Date Number String Boolean Error RegExp Symbol WeakMap structuredClone setTimeout clearTimeout setInterval queueMicrotask'.split(' '));
+const TOK = /\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)|`(?:\\[\s\S]|[^`\\])*(?:`|$)|"(?:\\.|[^"\\\n])*(?:"|$)|'(?:\\.|[^'\\\n])*(?:'|$)|\b\d[\d_]*(?:\.\d+)?n?\b|[A-Za-z_$][\w$]*|[\s\S]/g;
+function highlight(code, lang) {
+  if (lang === 'bash') return code.split('\n').map((l) => (/^\s*#/.test(l) ? '<span class="t-c">' + esc(l) + '</span>' : esc(l))).join('\n');
+  if (lang === 'text') return esc(code);
+  const ts = lang === 'ts';
+  let out = '', m;
+  TOK.lastIndex = 0;
+  while ((m = TOK.exec(code))) {
+    const t = m[0], c = t[0];
+    if (c === '/' && (t[1] === '/' || t[1] === '*')) out += '<span class="t-c">' + esc(t) + '</span>';
+    else if (c === '`' || c === '"' || c === "'") out += '<span class="t-s">' + esc(t) + '</span>';
+    else if (c >= '0' && c <= '9') out += '<span class="t-n">' + esc(t) + '</span>';
+    else if (/[A-Za-z_$]/.test(c)) {
+      let cls = '';
+      if (LIT.has(t)) cls = 't-l';
+      else if (KW.has(t) || (ts && TSKW.has(t))) cls = 't-k';
+      else if (ts && TYP.has(t)) cls = 't-t';
+      else if (BUI.has(t)) cls = 't-b';
+      else if (/^[A-Z]/.test(t)) cls = 't-t';
+      else if (/^\s*\(/.test(code.substr(TOK.lastIndex, 30))) cls = 't-f';
+      out += cls ? '<span class="' + cls + '">' + esc(t) + '</span>' : esc(t);
+    } else out += esc(t);
+  }
+  return out;
+}
+
+/* ---------- markdown mínimo ---------- */
+function inline(s) {
+  const codes = [];
+  s = s.replace(/`([^`]+)`/g, (_, c) => { codes.push(c); return '\u0000' + (codes.length - 1) + '\u0000'; });
+  s = esc(s);
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?![*\w])/g, '$1<em>$2</em>');
+  return s.replace(/\u0000(\d+)\u0000/g, (_, i) => '<code>' + esc(codes[i]) + '</code>');
+}
+const LABEL = { js: 'JavaScript', ts: 'TypeScript', bash: 'Terminal', json: 'JSON', text: '' };
+function md(src, ctx) {
+  const L = src.replace(/\r/g, '').split('\n');
+  const out = [];
+  let i = 0, m;
+  const isBlock = (ln) => /^(```|#{1,3}\s|>\s?|\s*[-*]\s|\s*\d+\.\s|\|)/.test(ln);
+  while (i < L.length) {
+    const ln = L[i];
+    if ((m = /^```(\w*)\s*(run)?\s*$/.exec(ln))) {
+      const lang = m[1] || 'text', run = !!m[2], buf = [];
+      i++;
+      while (i < L.length && !/^```\s*$/.test(L[i])) buf.push(L[i++]);
+      i++;
+      const code = buf.join('\n');
+      if (run && ctx) { ctx.runs.push({ code, lang }); out.push('<div class="mini" data-run="' + (ctx.runs.length - 1) + '"></div>'); }
+      else out.push('<div class="cb"><div class="cb-bar"><span>' + (LABEL[lang] || '') + '</span><span class="spacer"></span><button class="btn sm ghost" type="button" data-copy>Copiar</button></div><pre class="code"><code>' + highlight(code, lang) + '</code></pre></div>');
+      continue;
+    }
+    if (!ln.trim()) { i++; continue; }
+    if ((m = /^(#{1,3})\s+(.*)$/.exec(ln))) { const n = Math.max(2, m[1].length); out.push('<h' + n + '>' + inline(m[2]) + '</h' + n + '>'); i++; continue; }
+    if (/^\|/.test(ln) && /^\|[\s:|-]+\|?\s*$/.test(L[i + 1] || '')) {
+      const cells = (r) => r.trim().replace(/^\||\|$/g, '').split(/(?<!\\)\|/).map((c) => c.replace(/\\\|/g, '|').trim());
+      const head = cells(ln);
+      i += 2;
+      const rows = [];
+      while (i < L.length && /^\|/.test(L[i])) rows.push(cells(L[i++]));
+      out.push('<div class="tbl"><table><thead><tr>' + head.map((c) => '<th>' + inline(c) + '</th>').join('') + '</tr></thead><tbody>' + rows.map((r) => '<tr>' + r.map((c) => '<td>' + inline(c) + '</td>').join('') + '</tr>').join('') + '</tbody></table></div>');
+      continue;
+    }
+    if (/^>\s?/.test(ln)) {
+      const buf = [];
+      while (i < L.length && /^>\s?/.test(L[i])) buf.push(L[i++].replace(/^>\s?/, ''));
+      out.push('<blockquote><p>' + inline(buf.join(' ')) + '</p></blockquote>');
+      continue;
+    }
+    if (/^\s*([-*]|\d+\.)\s/.test(ln)) {
+      const ord = /^\s*\d+\./.test(ln), items = [];
+      while (i < L.length && /^\s*([-*]|\d+\.)\s/.test(L[i])) {
+        let t = L[i++].replace(/^\s*([-*]|\d+\.)\s+/, '');
+        while (i < L.length && L[i].trim() && /^\s{2,}\S/.test(L[i]) && !/^\s*([-*]|\d+\.)\s/.test(L[i])) t += ' ' + L[i++].trim();
+        items.push(t);
+      }
+      out.push((ord ? '<ol>' : '<ul>') + items.map((t) => '<li>' + inline(t) + '</li>').join('') + (ord ? '</ol>' : '</ul>'));
+      continue;
+    }
+    const buf = [];
+    while (i < L.length && L[i].trim() && !(buf.length && isBlock(L[i]))) buf.push(L[i++]);
+    out.push('<p>' + inline(buf.join(' ')) + '</p>');
+  }
+  return out.join('\n');
+}
+
+/* ---------- editor de código ---------- */
+function makeEditor(host, opt) {
+  host.classList.add('ed');
+  host.innerHTML = '<div class="ed-scroll"><div class="gut" aria-hidden="true"></div><div class="ed-main"><pre class="hl" aria-hidden="true"></pre><textarea class="ta" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Editor de código"></textarea></div></div>';
+  const ta = $('.ta', host), hl = $('.hl', host), gut = $('.gut', host);
+  let errLines = new Set(), timer;
+  const paint = () => {
+    const v = ta.value;
+    hl.innerHTML = highlight(v, opt.lang) + '\n';
+    const n = v.split('\n').length;
+    let g = '';
+    for (let k = 1; k <= n; k++) g += '<div' + (errLines.has(k) ? ' class="err"' : '') + '>' + k + '</div>';
+    gut.innerHTML = g;
+  };
+  ta.value = opt.code;
+  paint();
+  const ins = (txt) => { if (!document.execCommand('insertText', false, txt)) { const s = ta.selectionStart; ta.setRangeText(txt, s, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true })); } };
+  ta.addEventListener('input', () => { errLines = new Set(); paint(); clearTimeout(timer); timer = setTimeout(() => opt.onInput && opt.onInput(ta.value), 300); });
+  ta.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); opt.onSubmit && opt.onSubmit(); return; }
+    const v = ta.value, s = ta.selectionStart, en = ta.selectionEnd;
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (s === en && !e.shiftKey) { ins('  '); return; }
+      const a = v.lastIndexOf('\n', s - 1) + 1;
+      const block = v.slice(a, en);
+      const next = e.shiftKey ? block.replace(/^ {1,2}/gm, '') : block.replace(/^/gm, '  ');
+      ta.setSelectionRange(a, en);
+      ins(next);
+      ta.setSelectionRange(a, a + next.length);
+      return;
+    }
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      const ls = v.lastIndexOf('\n', s - 1) + 1;
+      const line = v.slice(ls, s);
+      const ind = /^[ \t]*/.exec(line)[0];
+      const extra = /[{(\[]\s*$/.test(line) ? '  ' : '';
+      const p = v[s - 1], n = v[en];
+      if ((p === '{' && n === '}') || (p === '[' && n === ']') || (p === '(' && n === ')')) {
+        ins('\n' + ind + extra + '\n' + ind);
+        const pos = s + 1 + ind.length + extra.length;
+        ta.setSelectionRange(pos, pos);
+      } else ins('\n' + ind + extra);
+    }
+  });
+  return {
+    get value() { return ta.value; },
+    set value(v) { ta.value = v; errLines = new Set(); paint(); },
+    setErrors(a) { errLines = new Set(a); paint(); },
+    focus() { ta.focus(); },
+  };
+}
+
+/* ---------- execução (Worker) e compilador TS ---------- */
+function execute(code, tests, o) {
+  o = o || {};
+  const settleMs = o.settleMs || 3000, limit = o.limit || 12000;
+  return new Promise((resolve) => {
+    const head = DATA.runner + '\nconst __userFn = async function(' + PARAMS.join(',') + '){\n"use strict";\n';
+    const src = head + code + '\n;\n' + (tests || '') + '\n};\n__runFn(__userFn, { settleMs: ' + settleMs + ' }).then((r) => self.postMessage({ ok: true, r }), (e) => self.postMessage({ ok: false, error: String(e) }));';
+    let url, w, done = false, timer;
+    const finish = (v) => { if (done) return; done = true; clearTimeout(timer); try { w && w.terminate(); } catch (e) {} try { URL.revokeObjectURL(url); } catch (e) {} resolve(v); };
+    try { url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' })); w = new Worker(url); }
+    catch (e) { resolve({ error: 'Não consegui iniciar o ambiente de execução neste navegador.', logs: [], results: [] }); return; }
+    timer = setTimeout(() => finish({ timeout: true, logs: [], results: [], limit }), limit);
+    w.onmessage = (ev) => (ev.data.ok ? finish(ev.data.r) : finish({ error: ev.data.error, logs: [], results: [] }));
+    w.onerror = (ev) => { if (ev.preventDefault) ev.preventDefault(); finish({ syntax: true, line: ev.lineno - (head.split('\n').length - 1), error: String(ev.message || 'Erro de sintaxe').replace(/^Uncaught\s+/, ''), logs: [], results: [] }); };
+  });
+}
+let tsTools = null, tsLoading = null;
+function ensureTS(status) {
+  if (tsTools) return Promise.resolve(tsTools);
+  if (tsLoading) return tsLoading;
+  status('Carregando o compilador TypeScript (cerca de 9 MB, só na primeira vez)…');
+  tsLoading = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = TS_URL;
+    s.onload = () => { try { tsTools = __makeTsTools(window.ts, DATA.lib); resolve(tsTools); } catch (e) { reject(e); } };
+    s.onerror = () => reject(new Error('download'));
+    document.head.appendChild(s);
+  }).catch((e) => { tsLoading = null; throw e; });
+  return tsLoading;
+}
+function tsFriendly(msg) {
+  if (/^Unused '@ts-expect-error'/.test(msg)) return 'Isto deveria ser recusado pelo compilador, mas foi aceito.';
+  if (/Type 'false' is not assignable to type 'true'|Type 'true' is not assignable to type 'false'/.test(msg)) return 'O tipo não tem exatamente a forma pedida.';
+  return 'O compilador recusou: ' + msg;
+}
+
+/* ---------- saída do console ---------- */
+function outHtml(res, empty) {
+  if (res.timeout) return '<div class="line error">O código demorou mais de ' + Math.round((res.limit || 12000) / 1000) + ' segundos e foi interrompido. Provável laço infinito: confira a condição de parada.</div>';
+  if (res.syntax) return '<div class="line error">Erro de sintaxe' + (res.line > 0 ? ' (perto da linha ' + res.line + ')' : '') + ': ' + esc(res.error) + '\n→ Confira chaves { }, parênteses ( ), colchetes [ ], aspas e vírgulas.</div>';
+  const rows = (res.logs || []).map((l) => '<div class="line ' + l.k + '">' + esc(l.t) + '</div>');
+  if (res.error) rows.push('<div class="line error">' + esc(res.error) + '</div>');
+  if (!rows.length) rows.push('<div class="line dim">' + esc(empty || '(sem saída)') + '</div>');
+  return rows.join('');
+}
+
+/* ---------- exemplos executáveis dentro das explicações ---------- */
+function mountRuns(root, ctx) {
+  $$('.mini', root).forEach((h) => {
+    const r = ctx.runs[Number(h.dataset.run)];
+    h.className = 'cb';
+    h.innerHTML = '<div class="cb-bar"><span>' + (LABEL[r.lang] || 'código') + ' · pode editar</span><span class="spacer"></span><button class="btn sm primary" type="button">' + playIc + ' Rodar</button></div><div class="ed-host"></div><div class="out" hidden></div>';
+    const ed = makeEditor($('.ed-host', h), { code: r.code, lang: r.lang, onSubmit: () => btn.click() });
+    $('.ed-scroll', h).style.maxHeight = '420px';
+    const btn = $('button', h), out = $('.out', h);
+    btn.addEventListener('click', async () => {
+      btn.disabled = true; out.hidden = false; out.innerHTML = '<div class="line dim">Executando…</div>';
+      const res = await execute(ed.value, '', { settleMs: 2500, limit: 10000 });
+      out.innerHTML = outHtml(res, '(rodou sem imprimir nada)');
+      btn.disabled = false;
+    });
+  });
+}
+
+/* ---------- navegação ---------- */
+const view = $('#view'), side = $('#side');
+let sideTrack = 'js', openMods = new Set(), current = null, edApi = null;
+const go = (h) => { if (location.hash === '#' + h) route(); else location.hash = h; };
+function renderMini() {
+  const d = doneCount(lessons);
+  $('#miniProg').innerHTML = '<span class="long">' + d + ' de ' + lessons.length + ' lições</span><span class="short">' + d + '/' + lessons.length + '</span><div class="bar"><i style="width:' + Math.round((d / lessons.length) * 100) + '%"></i></div>';
+}
+function renderSide() {
+  const keep = side.scrollTop;
+  const cur = current && byId[current];
+  if (cur) sideTrack = cur.track;
+  let h = '<button class="btn sm side-close" type="button" data-close>Fechar índice</button><div class="tabs" role="tablist">' + Object.keys(tracks).map((t) => {
+    const arr = lessonsOf(t);
+    return '<button class="tab" role="tab" type="button" data-tab="' + t + '" aria-selected="' + (t === sideTrack) + '">' + (tracks[t].curto) + '<small>' + doneCount(arr) + '/' + arr.length + '</small></button>';
+  }).join('') + '</div>';
+  for (const m of modules.filter((x) => x.track === sideTrack)) {
+    const arr = lessons.filter((l) => l.module === m.id);
+    const open = openMods.has(m.id) || (cur && cur.module === m.id) || (!cur && m === modules.find((x) => x.track === sideTrack));
+    h += '<details class="mod" data-mod="' + m.id + '"' + (open ? ' open' : '') + '><summary>' + esc(m.title) + '<span class="cnt">' + doneCount(arr) + '/' + arr.length + '</span></summary><ul>' +
+      arr.map((l) => '<li><a class="lnk' + (isDone(l.id) ? ' done' : '') + (l.id === current ? ' cur' : '') + '" href="#licao-' + l.id + '"><span class="dot">' + tick + '</span><span>' + esc(l.title) + '</span>' + (l.level ? '<span class="stars" title="Dificuldade">' + '★'.repeat(l.level) + '</span>' : '') + '</a></li>').join('') + '</ul></details>';
+  }
+  side.innerHTML = h;
+  side.scrollTop = keep;
+  $$('[data-tab]', side).forEach((b) => b.addEventListener('click', () => { sideTrack = b.dataset.tab; const sv = current; current = null; renderSide(); current = sv; }));
+  $$('details.mod', side).forEach((d) => d.addEventListener('toggle', () => { d.open ? openMods.add(d.dataset.mod) : openMods.delete(d.dataset.mod); }));
+  renderMini();
+}
+function route() {
+  const h = location.hash.replace(/^#/, '');
+  closeDrawer();
+  if (h.indexOf('licao-') === 0 && byId[h.slice(6)]) { current = h.slice(6); renderSide(); renderLesson(current); }
+  else { current = null; renderSide(); renderHome(); }
+  window.scrollTo(0, 0);
+}
+function closeDrawer() { side.classList.remove('open'); }
+window.addEventListener('hashchange', route);
+document.addEventListener('click', (e) => {
+  const g = e.target.closest('[data-go]');
+  if (g) { go(g.dataset.go); return; }
+  const c = e.target.closest('[data-copy]');
+  if (c) { const t = $('code', c.closest('.cb')).textContent; copyText(t).then((ok) => { const o = c.textContent; c.textContent = ok ? 'Copiado' : 'Selecione e copie'; setTimeout(() => (c.textContent = o), 1400); }); }
+});
+$('#menuBtn').addEventListener('click', () => side.classList.toggle('open'));
+side.addEventListener('click', (e) => { if (e.target.closest('a.lnk') || e.target.closest('[data-close]')) closeDrawer(); });
+$('#themeBtn').addEventListener('click', () => {
+  const r = document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  r.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem(KEY + '-theme', r.dataset.theme); } catch (e) {}
+});
+try { const t = localStorage.getItem(KEY + '-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+function copyText(t) {
+  return (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t).then(() => true) : Promise.reject()).catch(() => {
+    try { const ta = document.createElement('textarea'); ta.value = t; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok; } catch (e) { return false; }
+  });
+}
+
+/* ---------- página inicial ---------- */
+function nextLesson() {
+  const last = S.last && byId[S.last];
+  if (last && !isDone(last.id)) return last;
+  const from = last ? lessons.indexOf(last) : -1;
+  return lessons.slice(from + 1).concat(lessons).find((l) => !isDone(l.id)) || null;
+}
+function renderHome() {
+  const nx = nextLesson(), started = doneCount(lessons) > 0 || S.last;
+  view.innerHTML =
+    '<section class="hero"><h1>Do zero ao profissional em JavaScript e TypeScript</h1><p>' + lessons.length + ' lições com explicações em português, exercícios corrigidos por testes automáticos e um professor (Claude) para revisar o seu código e tirar dúvidas.</p><div class="cta">' +
+    (nx ? '<a class="btn primary" href="#licao-' + nx.id + '">' + (started ? 'Continuar: ' : 'Começar: ') + esc(nx.title) + '</a>' : '<span class="chip js">Você concluiu tudo. Parabéns!</span>') +
+    '</div></section>' +
+    '<div class="tracks">' + Object.keys(tracks).map((t) => {
+      const arr = lessonsOf(t), d = doneCount(arr), first = arr.find((l) => !isDone(l.id)) || arr[0];
+      return '<div class="card"><span class="chip ' + t + '">' + tracks[t].curto + '</span><h2>' + tracks[t].nome + '</h2><p>' + esc(tracks[t].desc) + '</p><div class="bar"><i style="width:' + Math.round((d / arr.length) * 100) + '%"></i></div><div class="muted" style="font-size:13px">' + d + ' de ' + arr.length + ' lições concluídas</div><div><a class="btn" href="#licao-' + first.id + '">' + (d ? 'Continuar' : 'Abrir trilha') + '</a></div></div>';
+    }).join('') + '</div>' +
+    '<div class="two"><div class="card"><h2>Como estudar cada lição</h2><ol class="steps"><li><strong>Leia</strong> a explicação e rode os exemplos. Eles são editáveis: mude valores e veja o que acontece.</li><li><strong>Resolva</strong> o exercício no editor, sem pressa. Errar faz parte.</li><li><strong>Verifique</strong> com <kbd>' + mod + ' + Enter</kbd>. Cada teste que falha mostra o valor esperado e o recebido.</li><li><strong>Peça revisão</strong> ao professor Claude: ele aponta o que melhorar sem entregar a resposta pronta.</li><li>Travou? Use as <strong>dicas</strong> em ordem. A solução fica por último.</li></ol></div>' +
+    '<div class="card"><h2>Roteiro completo</h2><ul class="road">' + Object.keys(tracks).map((t) => '<li class="tr">' + tracks[t].nome + '</li>' + modules.filter((m) => m.track === t).map((m) => {
+      const arr = lessons.filter((l) => l.module === m.id);
+      return '<li><a href="#licao-' + (arr.find((l) => !isDone(l.id)) || arr[0]).id + '">' + esc(m.title) + '</a><span class="n">' + doneCount(arr) + '/' + arr.length + '</span></li>';
+    }).join('')).join('') + '</ul></div></div>' +
+    '<div class="card" id="bk"><h2>Seu progresso</h2><p class="muted" style="margin:0 0 10px;font-size:14px">Fica salvo neste navegador. Para levar a outro aparelho, copie o backup e restaure lá.</p><div class="cta"><button class="btn sm" type="button" id="bkCopy">Copiar backup</button><button class="btn sm" type="button" id="bkRest">Restaurar backup</button></div><div id="bkBox"></div></div>';
+  $('#bkCopy').addEventListener('click', () => copyText(JSON.stringify(S)).then((ok) => { $('#bkBox').innerHTML = ok ? '<p class="note">Backup copiado.</p>' : '<p class="note">Não consegui copiar. Selecione o texto abaixo.</p><textarea class="bk" readonly>' + esc(JSON.stringify(S)) + '</textarea>'; }));
+  $('#bkRest').addEventListener('click', () => {
+    $('#bkBox').innerHTML = '<p class="note">Cole o backup aqui e confirme. Isto substitui o progresso atual.</p><textarea class="bk" id="bkIn"></textarea><div class="cta" style="margin-top:8px"><button class="btn sm primary" type="button" id="bkOk">Restaurar</button></div><p class="note" id="bkMsg"></p>';
+    $('#bkOk').addEventListener('click', () => { try { const r = JSON.parse($('#bkIn').value); if (!r || r.v !== 1 || typeof r.L !== 'object') throw 0; S = r; save(); route(); } catch (e) { $('#bkMsg').textContent = 'Esse texto não parece um backup válido.'; } });
+  });
+}
+
+/* ---------- professor Claude ---------- */
+let samplePromise;
+const getSample = () => samplePromise || (samplePromise = (async () => { try { return window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch (e) { return null; } })());
+const threads = {};
+const ERR = { not_granted: 'Você não permitiu que esta página use o Claude.', rate_limited: 'Muitas chamadas seguidas ou limite de uso atingido. Espere um pouco e tente de novo.', session_expired: 'Sua sessão expirou. Entre de novo.', sampling_disabled: 'O Claude não está disponível nesta conta.', refused: 'O Claude não respondeu a essa pergunta. Reformule.', empty_completion: 'Veio uma resposta vazia. Reformule a pergunta.', prompt_too_large: 'O código ficou grande demais para enviar.', upstream_error: 'Falha de conexão. Tente de novo.' };
+const PREFACE = 'Você é o professor particular de programação de um aluno brasileiro que está aprendendo JavaScript e TypeScript do zero ao nível profissional, numa plataforma de exercícios. Responda sempre em português do Brasil, com tom de professor paciente e direto, em linguagem acessível a leigos (explique o jargão na primeira vez que usar).\nRegras: (1) Seja conciso: no máximo uns 250 palavras, salvo se o aluno pedir uma explicação longa. (2) NÃO entregue a solução completa do exercício, a não ser que o aluno peça explicitamente a resposta ou já tenha visto a solução; prefira apontar o trecho com problema, explicar o porquê e sugerir o próximo passo. (3) Use trechos curtos de código em blocos markdown. (4) Corrija conceitos errados com gentileza. (5) Quando útil, cite o nome do tópico na documentação (MDN ou TypeScript Handbook) para leitura adicional, sem inventar links. (6) Formate em markdown simples.\n';
+function lessonContext(l) {
+  const s = st(l.id), code = edApi ? edApi.value : s.code || l.starter, m = modules.find((x) => x.id === l.module);
+  let r = 'CONTEXTO\nTrilha: ' + tracks[l.track].nome + ' · Módulo: ' + m.title + ' · Lição: ' + l.title + '\n\nTexto da lição (resumo):\n' + l.body.slice(0, 4500) + '\n';
+  if (!l.reading) {
+    r += '\nEnunciado do exercício:\n' + l.task + '\n\nCódigo atual do aluno:\n```' + (l.track === 'ts' ? 'ts' : 'js') + '\n' + code.slice(0, 7000) + '\n```\n';
+    if (s.last) r += '\nÚltimo resultado dos testes automáticos: ' + s.last.pass + ' de ' + s.last.total + ' passaram.' + (s.last.fails.length ? ' Falhas: ' + s.last.fails.join(' | ') : '') + '\n';
+    r += '\nO aluno ' + (s.seen ? 'JÁ viu' : 'ainda NÃO viu') + ' a solução de referência.\nSolução de referência (PRIVADA, use só para avaliar; não revele sem o aluno pedir):\n```\n' + l.solution.slice(0, 5000) + '\n```\n';
+  }
+  return r;
+}
+function mountTutor(l, host) {
+  const reading = l.reading;
+  host.innerHTML = '<div class="card tutor"><h2>Professor Claude <small>corrige seu código e tira dúvidas</small></h2><div class="acts">' +
+    (reading ? '' : '<button class="btn primary" type="button" data-t="review">Revisar meu código</button>') +
+    '<button class="btn" type="button" data-t="explain">Explicar de outro jeito</button><button class="btn" type="button" data-t="copy">Copiar enunciado e código</button></div>' +
+    '<form class="ask"><input type="text" id="tq" placeholder="Pergunte algo sobre esta lição…" aria-label="Sua pergunta ao professor" autocomplete="off"><button class="btn" type="submit">Perguntar</button><button class="btn" type="button" id="tstop" hidden>Parar</button></form>' +
+    '<div class="thread" id="th" aria-live="polite"></div><p class="note" id="tnote"></p></div>';
+  const th = $('#th', host), note = $('#tnote', host), stop = $('#tstop', host), form = $('.ask', host);
+  const hist = (threads[l.id] = threads[l.id] || []);
+  const draw = () => { th.innerHTML = hist.map((m) => (m.role === 'user' ? '<div class="msg u">' + esc(m.show || m.content) + '</div>' : '<div class="msg a"><div class="md">' + md(m.content) + '</div></div>')).join(''); };
+  draw();
+  let ctl = null, sample = null;
+  const copyAll = () => {
+    const s = st(l.id), code = edApi ? edApi.value : s.code || l.starter;
+    const txt = 'Sou aluno da Oficina de Código. Lição: ' + l.title + '.\n\n' + (reading ? 'Tenho uma dúvida sobre esta lição.' : 'Enunciado: ' + l.task + '\n\nMeu código:\n```\n' + code + '\n```\n\nPor favor, revise e me ajude sem entregar a solução pronta.');
+    copyText(txt).then((ok) => { note.textContent = ok ? 'Copiado. Cole na conversa com o Claude.' : 'Não consegui copiar automaticamente.'; });
+  };
+  async function ask(kind, text) {
+    if (!sample) return;
+    let prompt, show;
+    if (kind === 'review') {
+      show = 'Revise meu código.';
+      prompt = 'Revise o código do aluno para este exercício. Estruture a resposta com estes tópicos em negrito: **O que está certo**, **O que ajustar** (aponte o trecho, explique o porquê, sem entregar a solução pronta), **Boas práticas**, **Desafio extra** (uma variação curta para treinar).' + (l.track === 'desafios' ? ' Inclua uma análise breve de complexidade (Big O).' : '') + (l.track === 'ts' ? ' Comente também a qualidade dos tipos (evitar any, precisão dos tipos).' : '');
+    } else if (kind === 'explain') {
+      show = 'Explique de outro jeito.';
+      prompt = 'Explique o assunto principal desta lição de outro jeito: com uma analogia do dia a dia, depois um exemplo de código diferente do texto e, por fim, um erro comum de iniciantes.';
+    } else { show = text; prompt = text; }
+    const turns = [{ role: 'user', content: PREFACE + '\n' + lessonContext(l) }];
+    hist.slice(-6).forEach((m) => turns.push({ role: m.role, content: m.content }));
+    turns.push({ role: 'user', content: prompt });
+    hist.push({ role: 'user', content: prompt, show });
+    hist.push({ role: 'assistant', content: '' });
+    draw();
+    const bubble = th.lastElementChild;
+    bubble.innerHTML = '<div class="md"><p class="muted">Pensando…</p></div>';
+    ctl = new AbortController();
+    $$('button', host).forEach((b) => (b.disabled = true)); stop.hidden = false; stop.disabled = false; note.textContent = '';
+    try {
+      const r = await sample(turns, { cache: false, signal: ctl.signal, onText: ({ text }) => { hist[hist.length - 1].content = text; bubble.innerHTML = '<div class="md">' + md(text) + '</div>'; } });
+      hist[hist.length - 1].content = r.text;
+      bubble.innerHTML = '<div class="md">' + md(r.text) + '</div>';
+      if (r.truncated) note.textContent = 'A resposta foi cortada. Peça para continuar ou pergunte algo mais específico.';
+    } catch (e) {
+      if (e && e.text) { hist[hist.length - 1].content = e.text; bubble.innerHTML = '<div class="md">' + md(e.text) + '</div>'; }
+      else { hist.pop(); hist.pop(); draw(); }
+      if (!e || e.code !== 'cancelled') note.textContent = ERR[e && e.code] || 'Não consegui falar com o professor agora.';
+      if (e && (e.code === 'not_granted' || e.code === 'sampling_disabled')) sample = null;
+    } finally {
+      ctl = null; stop.hidden = true;
+      $$('button', host).forEach((b) => (b.disabled = !sample && b.dataset.t !== 'copy' ? true : false));
+    }
+  }
+  $$('[data-t]', host).forEach((b) => b.addEventListener('click', () => (b.dataset.t === 'copy' ? copyAll() : ask(b.dataset.t))));
+  stop.addEventListener('click', () => ctl && ctl.abort());
+  form.addEventListener('submit', (e) => { e.preventDefault(); const q = $('#tq', host).value.trim(); if (!q) return; $('#tq', host).value = ''; ask('free', q); });
+  getSample().then((s) => {
+    sample = s;
+    if (!s) {
+      $$('[data-t="review"],[data-t="explain"],.ask', host).forEach((n) => (n.hidden = true));
+      note.textContent = 'O professor ao vivo só funciona quando a página é aberta dentro do Claude. Use “Copiar enunciado e código” e cole na conversa para receber a correção.';
+    } else note.textContent = 'As respostas usam o seu uso do Claude. O professor enxerga a lição e o código que está no editor.';
+  });
+}
+
+/* ---------- página de lição ---------- */
+function renderLesson(id) {
+  const l = byId[id], s = st(id), m = modules.find((x) => x.id === l.module);
+  S.last = id; save();
+  const arr = lessonsOf(l.track), idx = arr.indexOf(l), prev = arr[idx - 1], next = arr[idx + 1];
+  const ctx = { runs: [] };
+  const ext = l.track === 'ts' ? 'ts' : 'js', lang = ext;
+  view.innerHTML =
+    '<article><div class="crumbs"><span class="chip ' + l.track + '">' + tracks[l.track].curto + '</span><span>' + esc(m.title) + '</span><span>·</span><span>' + (l.min || 10) + ' min</span>' + (l.level ? '<span class="stars" style="margin:0" title="Dificuldade">' + '★'.repeat(l.level) + '</span>' : '') + (isDone(id) ? '<span style="color:var(--ok);font-weight:600">Concluída</span>' : '') + '</div>' +
+    '<h1>' + esc(l.title) + '</h1>' +
+    '<div class="cols' + (l.reading ? ' single' : '') + '"><section class="explain md" id="exp">' + md(l.body, ctx) + (l.reading ? '<div id="readBox" style="margin-top:18px"></div>' : '') + '</section>' +
+    (l.reading ? '<section class="work" id="work"></section>' :
+    '<section class="work" id="work"><div class="card"><h2>Exercício</h2><div class="md" style="font-size:14.5px"><p style="max-width:none;margin:0">' + inline(l.task) + '</p></div></div>' +
+    '<div class="edcard"><div class="ed-top"><span>' + (l.track === 'desafios' ? 'desafio.js' : 'exercicio.' + ext) + '</span><span class="spacer"></span><button class="btn sm ghost" type="button" id="reset">Recomeçar</button></div><div id="ed"></div>' +
+    '<div class="actions"><button class="btn primary" type="button" id="verify">' + tick.replace('<svg', '<svg style="width:14px;height:14px"') + ' Verificar <kbd>' + mod + '+↵</kbd></button><button class="btn" type="button" id="run">' + playIc + ' Rodar</button><button class="btn" type="button" id="hint"></button><button class="btn" type="button" id="sol">Ver solução</button></div><div id="conf"></div></div>' +
+    '<div id="hints"></div><div id="result"></div></section>') +
+    '</div><div id="tutor" style="margin-top:18px;max-width:1100px"></div>' +
+    '<nav class="pager"><span>' + (prev ? '<a class="btn" href="#licao-' + prev.id + '">← ' + esc(prev.title) + '</a>' : '') + '</span><span>' + (next ? '<a class="btn" href="#licao-' + next.id + '">' + esc(next.title) + ' →</a>' : '<a class="btn" href="#inicio">Voltar ao início</a>') + '</span></nav></article>';
+  mountRuns($('#exp'), ctx);
+  mountTutor(l, $('#tutor'));
+  edApi = null;
+  if (l.reading) { drawReading(l); return; }
+
+  const resEl = $('#result'), conf = $('#conf'), verifyBtn = $('#verify'), runBtn = $('#run');
+  edApi = makeEditor($('#ed'), { code: s.code != null ? s.code : l.starter, lang, onInput: (v) => { st(id).code = v; save(); }, onSubmit: () => verify() });
+  const busy = (b) => [verifyBtn, runBtn].forEach((x) => (x.disabled = b));
+  const drawHints = () => {
+    const n = s.hints || 0;
+    $('#hint').textContent = n >= l.hints.length ? 'Dicas esgotadas' : 'Pedir dica (' + n + '/' + l.hints.length + ')';
+    $('#hint').disabled = n >= l.hints.length;
+    $('#hints').innerHTML = n ? '<div class="hint-box"><h2>Dicas</h2><ol>' + l.hints.slice(0, n).map((h) => '<li>' + inline(h) + '</li>').join('') + '</ol></div>' : '';
+  };
+  drawHints();
+  $('#hint').addEventListener('click', () => { s.hints = Math.min((s.hints || 0) + 1, l.hints.length); save(); drawHints(); });
+  $('#reset').addEventListener('click', () => {
+    conf.innerHTML = '<div class="confirm" style="margin:0 12px 12px"><span>Recomeçar apaga o seu código desta lição.</span><button class="btn sm" type="button" id="y">Recomeçar</button><button class="btn sm ghost" type="button" id="n">Cancelar</button></div>';
+    $('#n').onclick = () => (conf.innerHTML = '');
+    $('#y').onclick = () => { edApi.value = l.starter; s.code = l.starter; save(); conf.innerHTML = ''; resEl.innerHTML = ''; };
+  });
+  const showSol = () => {
+    s.seen = true; save();
+    conf.innerHTML = '<div style="padding:0 12px 12px"><div class="cb" style="margin:0"><div class="cb-bar"><span>Solução de referência</span><span class="spacer"></span><button class="btn sm" type="button" id="use">Usar no editor</button><button class="btn sm ghost" type="button" data-copy>Copiar</button></div><pre class="code"><code>' + highlight(l.solution, lang) + '</code></pre></div><p class="note">Existem outras soluções corretas. Compare com a sua e pergunte ao professor se algo não ficar claro.</p></div>';
+    $('#use').onclick = () => { edApi.value = l.solution; s.code = l.solution; save(); };
+  };
+  $('#sol').addEventListener('click', () => {
+    if (s.seen) { showSol(); return; }
+    conf.innerHTML = '<div class="confirm" style="margin:0 12px 12px"><span>Ver a solução agora? Tentar mais um pouco costuma ensinar mais.</span><button class="btn sm" type="button" id="y">Mostrar solução</button><button class="btn sm ghost" type="button" id="n">Continuar tentando</button></div>';
+    $('#n').onclick = () => (conf.innerHTML = '');
+    $('#y').onclick = showSol;
+  });
+  if (s.seen) { $('#sol').textContent = 'Ver solução de novo'; }
+
+  async function compile(status) {
+    const tools = await ensureTS(status);
+    const chk = tools.check(edApi.value, l.types);
+    return { tools, chk, js: chk.syntax ? null : tools.transpile(edApi.value), jsTests: tools.transpile(l.tests) };
+  }
+  const tsErrHtml = (chk) => chk.errors.length ? '<div class="sec-t">Erros do compilador</div>' + chk.errors.map((e) => '<div class="row bad"><span class="mk">✗</span><div><strong>Linha ' + e.line + ':</strong> ' + esc(e.msg).replace(/\n/g, '<br>') + '</div></div>').join('') : '';
+  const status = (t) => { resEl.innerHTML = '<div class="card res"><div class="res-h run">' + esc(t) + '</div></div>'; };
+  const tsFail = (e) => { resEl.innerHTML = '<div class="card res"><div class="res-h bad">Não consegui carregar o compilador TypeScript.</div><div class="res-b"><p>Verifique a conexão e tente de novo. O compilador é baixado de um CDN público na primeira vez.</p></div></div>'; };
+
+  async function doRun() {
+    busy(true); status('Executando…');
+    try {
+      let js = edApi.value, chk = null;
+      if (l.track === 'ts') {
+        try { const c = await compile(status); chk = c.chk; js = c.js; } catch (e) { tsFail(e); busy(false); return; }
+        edApi.setErrors(chk.errors.map((e) => e.line));
+      }
+      const res = js == null ? { logs: [], error: null } : await execute(js, '', { settleMs: 3000, limit: 12000 });
+      resEl.innerHTML = '<div class="card res"><div class="res-h run">Saída do programa</div><div class="out" style="border:0">' + outHtml(res, 'Rodou sem erros e não imprimiu nada. Use console.log(...) para ver valores, ou clique em Verificar.') + '</div>' + (chk && chk.errors.length ? '<div class="res-b">' + tsErrHtml(chk) + '</div>' : '') + '</div>';
+    } finally { busy(false); }
+  }
+  async function verify() {
+    busy(true); status('Verificando…');
+    try {
+      const rows = [];
+      let chk = null, js = edApi.value, jsTests = l.tests, res;
+      if (l.track === 'ts') {
+        try { const c = await compile(status); chk = c.chk; js = c.js; jsTests = c.jsTests; } catch (e) { tsFail(e); return; }
+        edApi.setErrors(chk.errors.map((e) => e.line));
+        if (chk.syntax) { s.tries = (s.tries || 0) + 1; save(); resEl.innerHTML = '<div class="card res"><div class="res-h bad">Há erro de sintaxe no código</div><div class="res-b">' + tsErrHtml(chk) + '</div></div>'; return; }
+      }
+      status('Rodando os testes…');
+      res = await execute(js, jsTests, { settleMs: 400, limit: 40000 });
+      (res.results || []).forEach((r) => rows.push({ ok: r.ok, name: r.name, msg: r.msg }));
+      if (chk && chk.types) chk.types.forEach((t) => rows.push({ ok: t.ok, name: t.name, msg: t.ok ? '' : tsFriendly(t.msg), type: true }));
+      const typeErr = chk ? chk.errors.length : 0;
+      const pass = rows.filter((r) => r.ok).length;
+      const all = rows.length > 0 && pass === rows.length && !res.error && !res.timeout && !res.syntax && typeErr === 0;
+      s.tries = (s.tries || 0) + 1;
+      s.last = { pass, total: rows.length, fails: rows.filter((r) => !r.ok).slice(0, 4).map((r) => r.name + (r.msg ? ' → ' + r.msg.split('\n').slice(0, 2).join(' ') : '')) };
+      const firstTime = all && !s.done;
+      if (all) { s.done = true; s.t = Date.now(); }
+      save(); renderSide();
+      const head = all ? '<div class="res-h ok">' + tick.replace('<svg', '<svg style="width:16px;height:16px"') + ' Todos os testes passaram (' + pass + '/' + rows.length + ')</div>' : '<div class="res-h bad">' + pass + ' de ' + rows.length + ' testes passaram' + (typeErr ? ' · ' + typeErr + ' erro(s) de tipo' : '') + '</div>';
+      let body = '';
+      if (res.timeout || res.syntax || res.error) body += '<div class="sec-t">Erro na execução</div><div class="out" style="border:1px solid var(--line);border-radius:8px">' + outHtml(res) + '</div>';
+      body += tsErrHtml(chk || { errors: [] });
+      if (rows.length) body += '<div class="sec-t">Testes</div>' + rows.map((r) => '<div class="row ' + (r.ok ? 'ok' : 'bad') + '"><span class="mk">' + (r.ok ? '✓' : '✗') + '</span><div>' + (r.type ? '<span class="tag">tipo</span>' : '') + esc(r.name) + (r.ok ? '' : '<pre>' + esc(r.msg) + '</pre>') + '</div></div>').join('');
+      const logs = (res.logs || []);
+      if (logs.length) body += '<div class="sec-t">Saída do console</div><div class="out" style="border:1px solid var(--line);border-radius:8px">' + outHtml({ logs }) + '</div>';
+      let banner = '';
+      if (all) {
+        const mArr = lessons.filter((x) => x.module === l.module), modDone = mArr.every((x) => isDone(x.id));
+        banner = '<div class="banner" style="margin-top:12px"><span>' + (firstTime && modDone ? 'Módulo “' + esc(m.title) + '” concluído!' : 'Lição concluída' + (s.seen ? ' (com a solução à vista)' : '') + '.') + '</span>' + (next ? '<a class="btn primary" href="#licao-' + next.id + '">Próxima: ' + esc(next.title) + ' →</a>' : '<a class="btn primary" href="#inicio">Ver meu progresso</a>') + '<span style="font-weight:400;color:var(--ink)">Quer uma revisão de qualidade? Use “Revisar meu código” abaixo.</span></div>';
+      }
+      resEl.innerHTML = '<div class="card res">' + head + '<div class="res-b">' + body + '</div></div>' + banner;
+    } finally { busy(false); }
+  }
+  verifyBtn.addEventListener('click', verify);
+  runBtn.addEventListener('click', doRun);
+}
+function drawReading(l) {
+  const box = $('#readBox'), next = lessonsOf(l.track)[lessonsOf(l.track).indexOf(l) + 1];
+  const paint = () => {
+    box.innerHTML = isDone(l.id) ? '<div class="banner"><span>Lição lida.</span>' + (next ? '<a class="btn primary" href="#licao-' + next.id + '">Próxima: ' + esc(next.title) + ' →</a>' : '<a class="btn primary" href="#inicio">Ver meu progresso</a>') + '</div>' : '<button class="btn primary" type="button" id="readBtn">Marcar como lida</button>';
+    const b = $('#readBtn');
+    if (b) b.addEventListener('click', () => { const s = st(l.id); s.done = true; s.t = Date.now(); save(); renderSide(); paint(); });
+  };
+  paint();
+}
+
+route();
+})();
+</script>

@@ -1,0 +1,1410 @@
+@@module js-funcoes-avancadas | js | Funções de verdade | Escopo, closures e recursão: como as funções realmente funcionam por dentro.
+
+@@lesson js-escopo-closures | Escopo e closures | 25
+@@body
+**Escopo** é a região do código onde um nome existe.
+
+- **Global:** visível em todo o programa. Evite.
+- **De função:** nomes declarados dentro de uma função só existem nela.
+- **De bloco:** `let` e `const` dentro de `{ }` (um `if`, um `for`) ficam presos ao bloco. `var` ignora blocos, mais um motivo para evitá-lo.
+
+```js run
+const global = "visível em todo lugar";
+
+function teste() {
+  const local = "só aqui dentro";
+  console.log(global, local);
+}
+teste();
+// console.log(local); // ReferenceError: local is not defined
+```
+
+Uma função enxerga o escopo onde foi **criada** e os escopos acima dele. Se um nome interno repete um externo, ele o **sombreia** (shadowing).
+
+### Closure
+
+Uma **closure** é uma função que continua com acesso às variáveis do escopo onde nasceu, mesmo depois que esse escopo terminou:
+
+```js run
+function criarContador() {
+  let total = 0;           // variável "privada"
+  return () => ++total;
+}
+
+const a = criarContador();
+const b = criarContador();
+console.log(a(), a(), a()); // 1 2 3
+console.log(b());           // 1 (outro contador, outro total)
+```
+
+Ninguém de fora consegue mexer em `total`, só pela função devolvida. Closures dão **encapsulamento** (dados privados), são a base de fábricas de funções, `debounce`, `memoize` e dos hooks do React.
+
+### Hoisting e a "zona morta"
+
+Declarações `function` são içadas (podem ser chamadas antes de aparecerem). Variáveis `let`/`const` existem desde o início do bloco, mas usá-las antes da linha da declaração causa erro (a *temporal dead zone*).
+
+```js
+console.log(x); // ReferenceError: Cannot access 'x' before initialization
+let x = 5;
+```
+@@task
+Implemente `criarContador(inicio = 0)` devolvendo `{ incrementar(), decrementar(), valor() }` (`incrementar` e `decrementar` somam/subtraem 1 e devolvem o novo valor), e `criarCarteira(saldoInicial)` devolvendo `{ depositar(v), sacar(v), saldo() }`. `sacar` lança `new Error("Saldo insuficiente")` se `v` for maior que o saldo. O saldo **não** pode ser acessível como propriedade.
+@@starter
+function criarContador(inicio = 0) {
+}
+
+function criarCarteira(saldoInicial) {
+}
+
+@@tests
+$t('criarContador() começa em 0', () => $eq(criarContador().valor(), 0));
+$t('incrementar e decrementar', () => {
+  const c = criarContador(10);
+  $eq(c.incrementar(), 11);
+  $eq(c.incrementar(), 12);
+  $eq(c.decrementar(), 11);
+  $eq(c.valor(), 11);
+});
+$t('contadores são independentes', () => {
+  const a = criarContador();
+  const b = criarContador();
+  a.incrementar(); a.incrementar();
+  $eq([a.valor(), b.valor()], [2, 0]);
+});
+$t('carteira: depositar e sacar', () => {
+  const c = criarCarteira(100);
+  c.depositar(50);
+  c.sacar(30);
+  $eq(c.saldo(), 120);
+});
+$t('sacar mais que o saldo lança Error("Saldo insuficiente")', () => {
+  const c = criarCarteira(10);
+  $lanca(() => c.sacar(11), /Saldo insuficiente/);
+  $eq(c.saldo(), 10);
+});
+$t('o saldo não fica exposto como propriedade', () => {
+  const c = criarCarteira(10);
+  $eq(c.saldo === undefined || typeof c.saldo === 'function', true);
+  $eq(Object.keys(c).filter(k => typeof c[k] !== 'function'), []);
+});
+@@hints
+- Declare let valor = inicio; dentro de criarContador e devolva um objeto com funções que usam valor.
+- Em criarCarteira, guarde let saldo = saldoInicial; fora do objeto devolvido.
+- Verifique if (v > saldo) throw new Error("Saldo insuficiente") antes de subtrair.
+@@solution
+function criarContador(inicio = 0) {
+  let valor = inicio;
+  return {
+    incrementar() { return ++valor; },
+    decrementar() { return --valor; },
+    valor() { return valor; },
+  };
+}
+
+function criarCarteira(saldoInicial) {
+  let saldo = saldoInicial;
+  return {
+    depositar(v) { saldo += v; },
+    sacar(v) {
+      if (v > saldo) throw new Error("Saldo insuficiente");
+      saldo -= v;
+    },
+    saldo() { return saldo; },
+  };
+}
+
+@@lesson js-recursao | Recursão | 25
+@@body
+**Recursão** é quando uma função chama a si mesma para resolver uma versão menor do mesmo problema. Toda função recursiva precisa de:
+
+1. **Caso base:** a situação mais simples, que responde sem chamar a si mesma.
+2. **Passo recursivo:** reduz o problema e chama a função de novo.
+
+```js run
+function fatorial(n) {
+  if (n <= 1) return 1;          // caso base
+  return n * fatorial(n - 1);    // passo recursivo
+}
+console.log(fatorial(5)); // 5 * 4 * 3 * 2 * 1 = 120
+```
+
+Para `fatorial(3)` o programa empilha: `3 * fatorial(2)` → `2 * fatorial(1)` → `1`. Depois desempilha multiplicando. Cada chamada ocupa espaço na **pilha de chamadas**. Sem caso base (ou com um que nunca é alcançado), a pilha estoura: `RangeError: Maximum call stack size exceeded`.
+
+### Quando usar
+
+Recursão brilha em estruturas **aninhadas** (árvores, pastas dentro de pastas, JSON profundo), onde um laço simples não basta:
+
+```js run
+function somarAninhado(lista) {
+  let total = 0;
+  for (const item of lista) {
+    total += Array.isArray(item) ? somarAninhado(item) : item;
+  }
+  return total;
+}
+console.log(somarAninhado([1, [2, [3, 4]], 5]));
+```
+
+Para problemas simples e repetitivos, um laço é mais eficiente. Para problemas "de dentro para dentro", a recursão costuma ser mais clara.
+@@task
+Implemente com recursão: `fatorial(n)`, `potencia(base, expoente)` (expoente inteiro ≥ 0, sem usar `**` nem `Math.pow`), `contagemRegressiva(n)` (array `[n, n-1, ..., 1]`; `[]` se n ≤ 0) e `profundidade(lista)` (nível máximo de aninhamento: `[]` vale 1, `[1, [2]]` vale 2).
+@@starter
+function fatorial(n) {
+}
+
+function potencia(base, expoente) {
+}
+
+function contagemRegressiva(n) {
+}
+
+function profundidade(lista) {
+}
+
+@@tests
+$t('fatorial(0) = 1 e fatorial(5) = 120', () => { $eq(fatorial(0), 1); $eq(fatorial(5), 120); });
+$t('fatorial(10) = 3628800', () => $eq(fatorial(10), 3628800));
+$t('potencia(2, 10) = 1024', () => $eq(potencia(2, 10), 1024));
+$t('potencia(7, 0) = 1', () => $eq(potencia(7, 0), 1));
+$t('potencia não usa ** nem Math.pow', () => $ok(!/\*\*|Math\.pow/.test(String(potencia)), 'Resolva com recursão.'));
+$t('contagemRegressiva(4) = [4, 3, 2, 1]', () => $eq(contagemRegressiva(4), [4, 3, 2, 1]));
+$t('contagemRegressiva(0) = []', () => $eq(contagemRegressiva(0), []));
+$t('profundidade([]) = 1', () => $eq(profundidade([]), 1));
+$t('profundidade([1, 2, 3]) = 1', () => $eq(profundidade([1, 2, 3]), 1));
+$t('profundidade([1, [2, [3, [4]]]]) = 4', () => $eq(profundidade([1, [2, [3, [4]]]]), 4));
+@@hints
+- Pergunte-se: qual é o caso mais simples? fatorial(0) e (1) valem 1; potencia(x, 0) vale 1.
+- potencia(b, e) = b * potencia(b, e - 1)
+- contagemRegressiva(n) = [n, ...contagemRegressiva(n - 1)]
+- profundidade: 1 + o maior valor de profundidade(item) entre os itens que são arrays (ou 0 se não houver).
+@@solution
+function fatorial(n) {
+  if (n <= 1) return 1;
+  return n * fatorial(n - 1);
+}
+
+function potencia(base, expoente) {
+  if (expoente === 0) return 1;
+  return base * potencia(base, expoente - 1);
+}
+
+function contagemRegressiva(n) {
+  if (n <= 0) return [];
+  return [n, ...contagemRegressiva(n - 1)];
+}
+
+function profundidade(lista) {
+  let maior = 0;
+  for (const item of lista) {
+    if (Array.isArray(item)) maior = Math.max(maior, profundidade(item));
+  }
+  return 1 + maior;
+}
+
+@@module js-problemas | js | Resolver problemas | Como pensar, testar e consertar. A habilidade que separa quem digita código de quem programa.
+
+@@lesson js-resolver-problemas | Um método para resolver problemas | 25
+@@body
+Programadores experientes não "sabem a resposta": eles têm um **método**. Use estes passos sempre:
+
+1. **Entenda.** Reescreva o problema com suas palavras. Quais são as entradas? Qual é a saída?
+2. **Exemplos.** Escreva 2 ou 3 casos à mão, com a resposta esperada.
+3. **Casos de borda.** Lista vazia? Valores repetidos? Número negativo? Texto vazio?
+4. **Plano em português.** Descreva os passos sem código (pseudocódigo).
+5. **Implemente o menor pedaço** que funciona e teste logo.
+6. **Refine.** Só depois pense em deixar mais elegante ou mais rápido.
+
+### Exemplo: "o maior número de uma lista"
+
+- Entrada: lista de números. Saída: o maior, ou `undefined` se vazia.
+- Exemplos: `[3, 9, 2]` → `9`; `[-5, -1]` → `-1`; `[]` → `undefined`.
+- Plano: guardar o "maior até agora" (o primeiro item); percorrer o resto; se achar um maior, trocar.
+
+```js run
+function maior(lista) {
+  if (lista.length === 0) return undefined;
+  let melhor = lista[0];
+  for (const n of lista) {
+    if (n > melhor) melhor = n;
+  }
+  return melhor;
+}
+console.log(maior([3, 9, 2]), maior([-5, -1]), maior([]));
+```
+
+Observe que inicializar `melhor` com `0` quebraria o caso `[-5, -1]`. Pensar nos casos de borda **antes** evita esse tipo de bug.
+
+> **Se travar:** explique o problema em voz alta (método do "patinho de borracha"), desenhe, simplifique o problema ou resolva primeiro um caso menor.
+@@task
+Aplique o método. `segundoMaior(lista)` devolve o segundo maior valor **distinto** (em `[5, 5, 3]` é `3`), ou `undefined` se não existir. `mediana(lista)` devolve a mediana (valor do meio da lista ordenada; em listas de tamanho par, a média dos dois do meio), ou `undefined` se vazia. Não altere a lista recebida.
+@@starter
+function segundoMaior(lista) {
+}
+
+function mediana(lista) {
+}
+
+@@tests
+$t('segundoMaior([4, 9, 2, 7]) = 7', () => $eq(segundoMaior([4, 9, 2, 7]), 7));
+$t('segundoMaior([5, 5, 3]) = 3 (valores distintos)', () => $eq(segundoMaior([5, 5, 3]), 3));
+$t('segundoMaior([8, 8]) = undefined', () => $eq(segundoMaior([8, 8]), undefined));
+$t('segundoMaior([]) = undefined', () => $eq(segundoMaior([]), undefined));
+$t('segundoMaior([-2, -9, -4]) = -4', () => $eq(segundoMaior([-2, -9, -4]), -4));
+$t('mediana([3, 1, 2]) = 2', () => $eq(mediana([3, 1, 2]), 2));
+$t('mediana([4, 1, 3, 2]) = 2.5', () => $eq(mediana([4, 1, 3, 2]), 2.5));
+$t('mediana([10]) = 10 e mediana([]) = undefined', () => { $eq(mediana([10]), 10); $eq(mediana([]), undefined); });
+$t('não altera a lista recebida', () => {
+  const l = [3, 1, 2];
+  mediana(l); segundoMaior(l);
+  $eq(l, [3, 1, 2]);
+});
+@@hints
+- segundoMaior: tire os repetidos (new Set(lista)), ordene do maior para o menor e pegue o índice 1.
+- mediana: ordene uma cópia com (a, b) => a - b. Se o tamanho é ímpar, pegue o do meio; se par, a média dos dois centrais.
+- Meio de uma lista de tamanho n: Math.floor(n / 2).
+@@solution
+function segundoMaior(lista) {
+  const distintos = [...new Set(lista)].sort((a, b) => b - a);
+  return distintos[1];
+}
+
+function mediana(lista) {
+  if (lista.length === 0) return undefined;
+  const ord = [...lista].sort((a, b) => a - b);
+  const meio = Math.floor(ord.length / 2);
+  return ord.length % 2 === 1 ? ord[meio] : (ord[meio - 1] + ord[meio]) / 2;
+}
+
+@@lesson js-erros-debug | Erros e depuração | 25
+@@body
+Erros fazem parte do trabalho. Quem programa bem sabe **ler** o erro e **tratá-lo**.
+
+### Lendo uma mensagem de erro
+
+`TypeError: Cannot read properties of undefined (reading 'nome')` diz três coisas: o **tipo** (`TypeError`), o **que** aconteceu (tentou ler `nome` de algo `undefined`) e, no console do navegador, **onde** (linha do arquivo). Comece sempre pela primeira linha.
+
+Erros comuns: `ReferenceError` (nome inexistente), `TypeError` (uso errado de um valor), `SyntaxError` (código mal escrito), `RangeError` (valor fora do limite, como pilha estourada).
+
+### `try`, `catch`, `finally` e `throw`
+
+```js run
+function dividir(a, b) {
+  if (b === 0) throw new RangeError("Divisão por zero");
+  return a / b;
+}
+
+try {
+  console.log(dividir(10, 2));
+  console.log(dividir(1, 0));
+  console.log("não chega aqui");
+} catch (erro) {
+  console.log("Falhou:", erro.message);
+} finally {
+  console.log("sempre executa");
+}
+```
+
+Lance erros com `throw new Error("mensagem clara")`. Trate (`catch`) só quando souber **o que fazer** com o erro; senão, deixe subir.
+
+### Estratégias de depuração
+
+- **`console.log` com rótulo:** `console.log("total:", total)` mostra o valor no ponto exato.
+- **Isolar:** teste a função sozinha com entradas simples.
+- **Pontos de interrupção:** nas ferramentas do navegador (F12 → Sources) você pausa a execução e inspeciona variáveis passo a passo. A instrução `debugger;` faz o mesmo.
+- **Reproduza o bug** de forma mínima antes de tentar consertar.
+@@task
+Implemente: `parseJSONSeguro(texto, padrao)` (devolve `JSON.parse(texto)` ou `padrao` se o texto for inválido), `dividir(a, b)` (lança `new RangeError("Divisão por zero")` se `b` for 0) e `executarSeguro(fn)` (chama `fn`; devolve `{ ok: true, valor }` se der certo ou `{ ok: false, erro: mensagem }` se lançar um erro).
+@@starter
+function parseJSONSeguro(texto, padrao) {
+}
+
+function dividir(a, b) {
+}
+
+function executarSeguro(fn) {
+}
+
+@@tests
+$t('parseJSONSeguro com JSON válido', () => $eq(parseJSONSeguro('{"a":1}', null), { a: 1 }));
+$t('parseJSONSeguro com JSON inválido devolve o padrão', () => $eq(parseJSONSeguro('{quebrado', []), []));
+$t('dividir(10, 4) = 2.5', () => $eq(dividir(10, 4), 2.5));
+$t('dividir(1, 0) lança RangeError "Divisão por zero"', () => {
+  let erro;
+  try { dividir(1, 0); } catch (e) { erro = e; }
+  $ok(erro instanceof RangeError, 'Lance new RangeError(...)');
+  $eq(erro.message, 'Divisão por zero');
+});
+$t('executarSeguro com sucesso', () => $eq(executarSeguro(() => 42), { ok: true, valor: 42 }));
+$t('executarSeguro com erro', () => $eq(executarSeguro(() => { throw new Error('falhou'); }), { ok: false, erro: 'falhou' }));
+@@hints
+- Envolva o código perigoso em try { ... } catch (erro) { ... }.
+- A mensagem do erro está em erro.message.
+@@solution
+function parseJSONSeguro(texto, padrao) {
+  try {
+    return JSON.parse(texto);
+  } catch {
+    return padrao;
+  }
+}
+
+function dividir(a, b) {
+  if (b === 0) throw new RangeError("Divisão por zero");
+  return a / b;
+}
+
+function executarSeguro(fn) {
+  try {
+    return { ok: true, valor: fn() };
+  } catch (erro) {
+    return { ok: false, erro: erro.message };
+  }
+}
+
+@@module js-organizacao | js | Código organizado | Classes, estruturas de dados e módulos: como projetos reais se organizam.
+
+@@lesson js-classes | Classes e orientação a objetos | 30
+@@body
+Uma **classe** é um molde para criar objetos com os mesmos dados e comportamentos.
+
+```js run
+class Retangulo {
+  constructor(largura, altura) {
+    this.largura = largura;
+    this.altura = altura;
+  }
+
+  area() {
+    return this.largura * this.altura;
+  }
+
+  get perimetro() {
+    return 2 * (this.largura + this.altura);
+  }
+
+  static quadrado(lado) {
+    return new Retangulo(lado, lado);
+  }
+}
+
+const r = new Retangulo(3, 4);
+console.log(r.area(), r.perimetro, Retangulo.quadrado(5).area());
+```
+
+- `constructor` roda em `new` e prepara o objeto.
+- **Métodos** ficam na classe e são compartilhados por todas as instâncias.
+- `get` cria uma propriedade calculada.
+- `static` pertence à classe, não às instâncias.
+
+### Campos privados
+
+Campos com `#` só existem dentro da classe. É encapsulamento de verdade:
+
+```js run
+class Conta {
+  #saldo = 0;
+  depositar(v) { this.#saldo += v; }
+  get saldo() { return this.#saldo; }
+}
+const c = new Conta();
+c.depositar(20);
+console.log(c.saldo);
+// console.log(c.#saldo); // SyntaxError
+```
+
+### Herança
+
+`extends` cria uma classe que reaproveita outra; `super` chama a original.
+
+```js run
+class Animal {
+  constructor(nome) { this.nome = nome; }
+  falar() { return `${this.nome} faz um som`; }
+}
+class Gato extends Animal {
+  falar() { return `${super.falar()}: miau`; }
+}
+console.log(new Gato("Mia").falar());
+```
+
+> **Na prática:** herança cria acoplamento forte. Muitos times preferem **composição** (objetos que usam outros objetos) e usam herança com moderação.
+@@task
+Crie `ContaBancaria` com saldo privado (`#saldo`), construtor `(saldoInicial = 0)`, métodos `depositar(v)` e `sacar(v)` (lança `Error("Saldo insuficiente")` se `v` > saldo; ambos devolvem `this`, permitindo encadear) e o getter `saldo`. Depois crie `ContaPoupanca` que estende `ContaBancaria` e tem `renderJuros(taxa)` (deposita `saldo * taxa`).
+@@starter
+class ContaBancaria {
+}
+
+class ContaPoupanca extends ContaBancaria {
+}
+
+@@tests
+$t('saldo inicial', () => { $eq(new ContaBancaria().saldo, 0); $eq(new ContaBancaria(80).saldo, 80); });
+$t('depositar e sacar', () => {
+  const c = new ContaBancaria(100);
+  c.depositar(50);
+  c.sacar(20);
+  $eq(c.saldo, 130);
+});
+$t('métodos encadeáveis', () => $eq(new ContaBancaria(10).depositar(5).sacar(3).saldo, 12));
+$t('sacar demais lança Error("Saldo insuficiente")', () => {
+  const c = new ContaBancaria(10);
+  $lanca(() => c.sacar(11), /Saldo insuficiente/);
+  $eq(c.saldo, 10);
+});
+$t('saldo é somente leitura', () => {
+  const c = new ContaBancaria(10);
+  try { c.saldo = 999; } catch {}
+  $eq(c.saldo, 10);
+});
+$t('ContaPoupanca herda de ContaBancaria', () => {
+  const p = new ContaPoupanca(200);
+  $ok(p instanceof ContaBancaria, 'Use extends ContaBancaria');
+  p.depositar(100);
+  $eq(p.saldo, 300);
+});
+$t('renderJuros(0.1) em 200 deixa 220', () => {
+  const p = new ContaPoupanca(200);
+  p.renderJuros(0.1);
+  $eq(p.saldo, 220);
+});
+@@hints
+- Declare #saldo = 0; no topo da classe e atribua no construtor: this.#saldo = saldoInicial.
+- Para encadear, termine os métodos com return this;
+- get saldo() { return this.#saldo; }, sem setter, impede alterações de fora.
+- Na filha, use this.saldo (getter) e this.depositar(...). Campos # não são visíveis nela.
+@@solution
+class ContaBancaria {
+  #saldo;
+
+  constructor(saldoInicial = 0) {
+    this.#saldo = saldoInicial;
+  }
+
+  depositar(v) {
+    this.#saldo += v;
+    return this;
+  }
+
+  sacar(v) {
+    if (v > this.#saldo) throw new Error("Saldo insuficiente");
+    this.#saldo -= v;
+    return this;
+  }
+
+  get saldo() {
+    return this.#saldo;
+  }
+}
+
+class ContaPoupanca extends ContaBancaria {
+  renderJuros(taxa) {
+    this.depositar(this.saldo * taxa);
+    return this;
+  }
+}
+
+@@lesson js-map-set-json | Map, Set e JSON | 25
+@@body
+Além de arrays e objetos, JS tem duas coleções muito úteis e um formato universal de dados.
+
+### `Set`: itens únicos
+
+```js run
+const tags = new Set(["js", "ts", "js"]);
+tags.add("node");
+console.log(tags.size, tags.has("ts"));
+console.log([...tags]);
+```
+
+O jeito mais curto de remover repetidos de um array: `[...new Set(lista)]`. Verificar `has` num `Set` é muito mais rápido que `includes` em array grande.
+
+### `Map`: chave → valor, com qualquer tipo de chave
+
+Diferente de objetos, mantém a ordem de inserção, aceita chaves de qualquer tipo e tem `size`.
+
+```js run
+const contagem = new Map();
+for (const letra of "banana") {
+  contagem.set(letra, (contagem.get(letra) ?? 0) + 1);
+}
+console.log(contagem);
+console.log([...contagem.entries()]);
+```
+
+### JSON
+
+**JSON** é um formato de texto para trocar dados entre sistemas.
+
+```js run
+const texto = JSON.stringify({ nome: "Ana", tags: ["a", "b"], extra: undefined });
+console.log(texto);
+console.log(JSON.parse(texto));
+```
+
+`JSON.stringify` descarta `undefined` e funções, e transforma `Date` em texto. `JSON.parse` lança erro se o texto for inválido (por isso você aprendeu `try/catch`).
+
+### Copiando em profundidade
+
+Para uma cópia **profunda** (que não compartilha objetos aninhados), use `structuredClone(obj)`.
+
+```js run
+const original = { lista: [1, 2] };
+const copia = structuredClone(original);
+copia.lista.push(3);
+console.log(original.lista, copia.lista);
+```
+@@task
+Implemente: `semRepetidos(lista)`, `frequencia(lista)` (um `Map` item → quantidade de vezes), `agruparPorTamanho(palavras)` (um `Map` tamanho → array de palavras, na ordem original) e `copiaProfunda(obj)` (sem compartilhar nada com o original).
+@@starter
+function semRepetidos(lista) {
+}
+
+function frequencia(lista) {
+}
+
+function agruparPorTamanho(palavras) {
+}
+
+function copiaProfunda(obj) {
+}
+
+@@tests
+$t('semRepetidos([1, 2, 2, 3, 1]) = [1, 2, 3]', () => $eq(semRepetidos([1, 2, 2, 3, 1]), [1, 2, 3]));
+$t('frequencia devolve um Map', () => $ok(frequencia(['a']) instanceof Map, 'Devolva new Map()'));
+$t('frequencia(["a", "b", "a"])', () => $eq([...frequencia(['a', 'b', 'a'])], [['a', 2], ['b', 1]]));
+$t('agruparPorTamanho', () => {
+  const m = agruparPorTamanho(['sol', 'lua', 'mar', 'terra', 'ar']);
+  $ok(m instanceof Map, 'Devolva um Map');
+  $eq(m.get(3), ['sol', 'lua', 'mar']);
+  $eq(m.get(5), ['terra']);
+  $eq(m.get(2), ['ar']);
+});
+$t('copiaProfunda não compartilha objetos aninhados', () => {
+  const original = { a: { b: [1, 2] } };
+  const c = copiaProfunda(original);
+  $eq(c, original);
+  c.a.b.push(3);
+  $eq(original.a.b, [1, 2]);
+});
+@@hints
+- semRepetidos: [...new Set(lista)]
+- frequencia: mapa.set(item, (mapa.get(item) ?? 0) + 1)
+- agruparPorTamanho: se !mapa.has(n), crie [] antes de dar push.
+- structuredClone(obj)
+@@solution
+function semRepetidos(lista) {
+  return [...new Set(lista)];
+}
+
+function frequencia(lista) {
+  const mapa = new Map();
+  for (const item of lista) {
+    mapa.set(item, (mapa.get(item) ?? 0) + 1);
+  }
+  return mapa;
+}
+
+function agruparPorTamanho(palavras) {
+  const mapa = new Map();
+  for (const p of palavras) {
+    if (!mapa.has(p.length)) mapa.set(p.length, []);
+    mapa.get(p.length).push(p);
+  }
+  return mapa;
+}
+
+function copiaProfunda(obj) {
+  return structuredClone(obj);
+}
+
+@@lesson js-modulos-npm | Módulos, Node.js e npm | 15
+@@body
+Projetos reais não cabem em um arquivo só. **Módulos** dividem o código em arquivos que exportam e importam partes.
+
+```js
+// matematica.js
+export function somar(a, b) {
+  return a + b;
+}
+export const PI = 3.14159;
+export default function dobro(n) { return n * 2; }
+
+// app.js
+import dobro, { somar, PI } from "./matematica.js";
+console.log(somar(2, 3), dobro(4), PI);
+```
+
+- `export` nomeado: pode ter vários por arquivo; importa com `{ }`.
+- `export default`: um por arquivo; importa sem chaves.
+- Esse é o sistema **ESM** (módulos ES), padrão na web e no Node moderno.
+
+### Onde o JS roda
+
+- **Navegador:** acessa a página (DOM), eventos, `fetch`, `localStorage`.
+- **Node.js:** acessa arquivos, rede e sistema operacional, ideal para servidores e ferramentas.
+
+### npm e `package.json`
+
+O **npm** instala bibliotecas de terceiros. O arquivo `package.json` descreve o projeto e suas dependências.
+
+```bash
+npm init -y
+npm install date-fns
+npm install --save-dev vitest
+```
+
+`dependencies` são usadas em produção; `devDependencies`, só no desenvolvimento (testes, formatadores). Para usar `import`/`export` em arquivos `.js` no Node, coloque `"type": "module"` no `package.json`.
+
+### Ferramentas que você vai encontrar
+
+Vite (servidor de desenvolvimento e empacotador), ESLint (aponta problemas no código), Prettier (formata automaticamente), Vitest/Jest (testes), Git (histórico e colaboração).
+
+> Esta lição é de leitura. Nos exercícios deste site não há `import`/`export`, porque cada exercício é um único arquivo.
+
+@@module js-assincrono | js | Assíncrono | Promises, async/await e o event loop: lidar com coisas que demoram.
+
+@@lesson js-promises | Promises | 30
+@@body
+Algumas tarefas demoram: buscar dados na rede, ler arquivos, esperar um tempo. JS não trava esperando: ele continua rodando e avisa quando terminar. Uma **Promise** representa um resultado que **ainda vai chegar**.
+
+Estados: **pending** (pendente) → **fulfilled** (deu certo, com um valor) ou **rejected** (deu errado, com um erro).
+
+```js run
+const espera = new Promise((resolve, reject) => {
+  setTimeout(() => resolve("pronto!"), 200);
+});
+
+espera
+  .then(valor => console.log(valor))
+  .catch(erro => console.log("erro", erro))
+  .finally(() => console.log("fim"));
+
+console.log("isto aparece primeiro");
+```
+
+`then` recebe o valor e **devolve outra promise**, o que permite encadear. `catch` captura qualquer rejeição acima dele.
+
+### Combinando promises
+
+| Função | Resolve quando... |
+| --- | --- |
+| `Promise.all([...])` | **todas** deram certo (rejeita se uma falhar) |
+| `Promise.allSettled([...])` | todas terminaram, com sucesso ou não |
+| `Promise.race([...])` | a **primeira** terminar |
+| `Promise.any([...])` | a primeira que der **certo** |
+
+```js run
+const rapida = new Promise(r => setTimeout(() => r("rápida"), 50));
+const lenta = new Promise(r => setTimeout(() => r("lenta"), 150));
+Promise.all([rapida, lenta]).then(r => console.log(r));
+Promise.race([rapida, lenta]).then(r => console.log(r));
+```
+@@task
+Implemente: `esperar(ms)` (promise que resolve com `undefined` depois de `ms`), `valorDepois(valor, ms)` (resolve com `valor` depois de `ms`), `primeiroResultado(promises)` (resolve com o valor da primeira que terminar) e `somarTodas(promises)` (promise que resolve com a soma dos números de todas).
+@@starter
+function esperar(ms) {
+}
+
+function valorDepois(valor, ms) {
+}
+
+function primeiroResultado(promises) {
+}
+
+function somarTodas(promises) {
+}
+
+@@tests
+$t('esperar devolve uma Promise que espera', async () => {
+  const p = esperar(40);
+  $ok(p instanceof Promise, 'Devolva new Promise(...)');
+  const ini = Date.now();
+  await p;
+  $ok(Date.now() - ini >= 30, 'Deveria esperar cerca de 40 ms');
+});
+$t('valorDepois("oi", 20) resolve "oi"', async () => $eq(await valorDepois('oi', 20), 'oi'));
+$t('primeiroResultado pega a mais rápida', async () => {
+  const r = await primeiroResultado([valorDepois('lenta', 80), valorDepois('rápida', 10)]);
+  $eq(r, 'rápida');
+});
+$t('somarTodas([1, 2, 3] em promises) = 6', async () => {
+  $eq(await somarTodas([valorDepois(1, 30), valorDepois(2, 10), valorDepois(3, 20)]), 6);
+});
+$t('somarTodas rejeita se alguma falhar', async () => {
+  let falhou = false;
+  const rej = Promise.reject(new Error('x'));
+  rej.catch(() => {});
+  try { await somarTodas([valorDepois(1, 5), rej]); } catch { falhou = true; }
+  $ok(falhou, 'Use Promise.all, que rejeita quando uma falha');
+});
+@@hints
+- esperar: return new Promise(resolve => setTimeout(resolve, ms));
+- primeiroResultado: Promise.race(promises)
+- somarTodas: Promise.all(promises).then(valores => ...soma...)
+@@solution
+function esperar(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function valorDepois(valor, ms) {
+  return new Promise(resolve => setTimeout(() => resolve(valor), ms));
+}
+
+function primeiroResultado(promises) {
+  return Promise.race(promises);
+}
+
+function somarTodas(promises) {
+  return Promise.all(promises).then(valores => valores.reduce((s, v) => s + v, 0));
+}
+
+@@lesson js-async-await | async e await | 30
+@@body
+`async`/`await` é uma sintaxe que faz código assíncrono parecer sequencial. É construída em cima de Promises.
+
+```js run
+const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+async function tarefa() {
+  console.log("começando");
+  await esperar(300);        // pausa SÓ esta função
+  console.log("300 ms depois");
+  return "fim";
+}
+
+tarefa().then(console.log);
+console.log("o resto do programa continua");
+```
+
+- Uma função `async` **sempre devolve uma Promise**.
+- `await` só vale dentro de funções `async` (e no topo de módulos) e "desembrulha" o valor da promise.
+- Erros viram exceções comuns: use `try/catch`.
+
+```js run
+async function buscar(id) {
+  if (id < 0) throw new Error("id inválido");
+  return { id };
+}
+
+async function main() {
+  try {
+    console.log(await buscar(1));
+    console.log(await buscar(-1));
+  } catch (e) {
+    console.log("capturado:", e.message);
+  }
+}
+main();
+```
+
+### Sequencial vs. paralelo
+
+Cada `await` em sequência **espera o anterior**. Se as tarefas são independentes, dispare todas e espere juntas:
+
+```js
+// lento: 3 × 100 ms = 300 ms
+for (const id of ids) resultados.push(await buscar(id));
+
+// rápido: ~100 ms no total
+const resultados = await Promise.all(ids.map(id => buscar(id)));
+```
+
+Esse erro (esperar em sequência o que poderia ser paralelo) é um dos problemas de desempenho mais comuns em código real.
+@@task
+O starter já traz `buscarUsuario(id)`, que simula uma API (demora 50 ms e rejeita para id ≤ 0). Implemente: `nomeDoUsuario(id)` (devolve o nome, ou `"desconhecido"` se a busca falhar), `nomesEmParalelo(ids)` (array de nomes, buscando **ao mesmo tempo**) e `comTentativas(fn, n)` (chama `fn` até `n` vezes; devolve o primeiro sucesso; se todas falharem, lança o último erro).
+@@starter
+function buscarUsuario(id) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id <= 0) reject(new Error("não encontrado"));
+      else resolve({ id, nome: `Usuário ${id}` });
+    }, 50);
+  });
+}
+
+async function nomeDoUsuario(id) {
+}
+
+async function nomesEmParalelo(ids) {
+}
+
+async function comTentativas(fn, n) {
+}
+
+@@tests
+$t('nomeDoUsuario(3) = "Usuário 3"', async () => $eq(await nomeDoUsuario(3), 'Usuário 3'));
+$t('nomeDoUsuario(0) = "desconhecido"', async () => $eq(await nomeDoUsuario(0), 'desconhecido'));
+$t('nomesEmParalelo devolve os nomes na ordem', async () => $eq(await nomesEmParalelo([1, 2, 3]), ['Usuário 1', 'Usuário 2', 'Usuário 3']));
+$t('nomesEmParalelo é paralelo (5 buscas em menos de 150 ms)', async () => {
+  const ini = Date.now();
+  await nomesEmParalelo([1, 2, 3, 4, 5]);
+  $ok(Date.now() - ini < 150, 'Use Promise.all com map para disparar tudo junto.');
+});
+$t('comTentativas devolve o primeiro sucesso', async () => {
+  let chamadas = 0;
+  const r = await comTentativas(async () => { chamadas++; if (chamadas < 3) throw new Error('falha'); return 'ok'; }, 5);
+  $eq([r, chamadas], ['ok', 3]);
+});
+$t('comTentativas lança o último erro se todas falharem', async () => {
+  let chamadas = 0;
+  let erro;
+  try { await comTentativas(async () => { chamadas++; throw new Error('erro ' + chamadas); }, 3); } catch (e) { erro = e; }
+  $ok(erro, 'Deveria lançar');
+  $eq([erro.message, chamadas], ['erro 3', 3]);
+});
+@@hints
+- nomeDoUsuario: try { const u = await buscarUsuario(id); return u.nome; } catch { return "desconhecido"; }
+- nomesEmParalelo: await Promise.all(ids.map(nomeDoUsuario))
+- comTentativas: laço de 1 até n com try/catch guardando o último erro; no fim, throw ultimoErro.
+@@solution
+function buscarUsuario(id) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id <= 0) reject(new Error("não encontrado"));
+      else resolve({ id, nome: `Usuário ${id}` });
+    }, 50);
+  });
+}
+
+async function nomeDoUsuario(id) {
+  try {
+    const usuario = await buscarUsuario(id);
+    return usuario.nome;
+  } catch {
+    return "desconhecido";
+  }
+}
+
+async function nomesEmParalelo(ids) {
+  return Promise.all(ids.map(nomeDoUsuario));
+}
+
+async function comTentativas(fn, n) {
+  let ultimoErro;
+  for (let i = 0; i < n; i++) {
+    try {
+      return await fn();
+    } catch (erro) {
+      ultimoErro = erro;
+    }
+  }
+  throw ultimoErro;
+}
+
+@@lesson js-event-loop | O event loop | 25
+@@body
+JavaScript executa **uma coisa de cada vez** (uma única thread). Então como ele faz timers, rede e eventos sem travar? Com o **event loop**.
+
+Peças do modelo:
+
+1. **Pilha de chamadas:** o código que está rodando agora.
+2. **Fila de microtarefas:** callbacks de `Promise` (`then`, `await`) e `queueMicrotask`.
+3. **Fila de tarefas (macrotarefas):** `setTimeout`, eventos de clique, etc.
+
+A regra do ciclo:
+
+1. Executa todo o código síncrono até esvaziar a pilha.
+2. Executa **todas** as microtarefas pendentes.
+3. Pega **uma** macrotarefa, executa, e volta ao passo 2.
+
+```js run
+console.log("1 síncrono");
+
+setTimeout(() => console.log("4 macrotarefa (timeout)"), 0);
+
+Promise.resolve().then(() => console.log("3 microtarefa (promise)"));
+
+console.log("2 síncrono");
+```
+
+Mesmo com `0` ms, o `setTimeout` roda **depois** das promises, porque microtarefas têm prioridade sobre macrotarefas.
+
+### Consequência prática
+
+Um laço pesado e síncrono **bloqueia tudo**: a página congela porque o navegador não consegue processar cliques nem desenhar. Divida trabalho pesado, use `await` entre etapas ou Web Workers.
+
+Depois de um `await`, o resto da função vira uma microtarefa, executada quando o código síncrono atual terminar.
+@@task
+A função `demo(log)` do starter registra letras em `log` na ordem em que o código roda. Preencha a lista `esperado` com a ordem **real** em que as letras vão aparecer. Pense antes de rodar: o teste compara sua previsão com a execução de verdade.
+@@starter
+async function demo(log) {
+  log.push("A");
+  setTimeout(() => log.push("B"), 0);
+  Promise.resolve().then(() => log.push("C"));
+  queueMicrotask(() => log.push("D"));
+  log.push("E");
+  await null;
+  log.push("F");
+}
+
+// Sua previsão da ordem dos registros:
+const esperado = [];
+
+@@tests
+$t('a previsão bate com a execução real', async () => {
+  const log = [];
+  await demo(log);
+  await $esperar(30);
+  $eq(esperado, log);
+});
+$t('a previsão não está vazia', () => $ok(esperado.length === 6, 'São 6 letras: A, B, C, D, E e F.'));
+@@hints
+- Primeiro roda tudo que é síncrono, de cima para baixo, até chegar no await. Quais letras são essas?
+- Depois, as microtarefas na ordem em que foram agendadas: o then (C), o queueMicrotask (D) e a continuação do await (F).
+- Por último, a macrotarefa do setTimeout.
+@@solution
+async function demo(log) {
+  log.push("A");
+  setTimeout(() => log.push("B"), 0);
+  Promise.resolve().then(() => log.push("C"));
+  queueMicrotask(() => log.push("D"));
+  log.push("E");
+  await null;
+  log.push("F");
+}
+
+// Síncrono: A, E. Microtarefas: C, D, F. Macrotarefa: B.
+const esperado = ["A", "E", "C", "D", "F", "B"];
+
+@@module js-profissional | js | Nível profissional | Imutabilidade, desempenho e padrões usados em código de produção.
+
+@@lesson js-puras-imutabilidade | Funções puras e imutabilidade | 25
+@@body
+Uma **função pura** tem duas características:
+
+1. Dadas as mesmas entradas, sempre devolve a mesma saída.
+2. Não tem **efeitos colaterais**: não altera variáveis externas, nem os argumentos recebidos, nem imprime, nem acessa rede ou relógio.
+
+```js run
+// impura: altera o argumento
+function adicionarImpura(lista, item) {
+  lista.push(item);
+  return lista;
+}
+
+// pura: devolve uma lista nova
+function adicionarPura(lista, item) {
+  return [...lista, item];
+}
+
+const original = [1, 2];
+adicionarPura(original, 3);
+console.log(original); // continua [1, 2]
+```
+
+Funções puras são fáceis de testar, de entender e de depurar, e são a base de bibliotecas como React e Redux.
+
+### Imutabilidade
+
+Em vez de mudar dados, crie **cópias atualizadas**. Para dados aninhados, copie cada nível que muda:
+
+```js run
+const estado = { usuario: { nome: "Ana", tags: ["a"] }, carregando: false };
+
+const novo = {
+  ...estado,
+  usuario: { ...estado.usuario, tags: [...estado.usuario.tags, "b"] },
+};
+console.log(estado.usuario.tags, novo.usuario.tags);
+```
+
+### Métodos de array: quais mutam?
+
+- **Mutam:** `push`, `pop`, `shift`, `unshift`, `splice`, `sort`, `reverse`.
+- **Não mutam:** `map`, `filter`, `slice`, `concat`, `flat`, e as versões modernas `toSorted()`, `toReversed()`, `toSpliced()` e `with(i, v)`.
+
+`Object.freeze(obj)` impede alterações (em modo estrito, tentar alterar lança erro), mas só no primeiro nível.
+@@task
+O carrinho é um objeto `{ itens: [{ id, nome, preco, qtd }] }`. Implemente de forma **pura**: `adicionarItem(carrinho, item)` (se o `id` já existe, soma a quantidade; senão acrescenta), `removerItem(carrinho, id)` e `total(carrinho)` (soma de `preco * qtd`). Os testes congelam os dados: qualquer mutação dá erro.
+@@starter
+function adicionarItem(carrinho, item) {
+}
+
+function removerItem(carrinho, id) {
+}
+
+function total(carrinho) {
+}
+
+@@tests
+const vazio = () => $congelar({ itens: [] });
+const cam = { id: 1, nome: 'Camiseta', preco: 40, qtd: 2 };
+const bone = { id: 2, nome: 'Boné', preco: 25, qtd: 1 };
+$t('adicionarItem acrescenta um item novo', () => {
+  const c = adicionarItem(vazio(), $congelar({ ...cam }));
+  $eq(c.itens.length, 1);
+  $eq(c.itens[0].nome, 'Camiseta');
+});
+$t('adicionarItem soma a quantidade se o id já existe', () => {
+  let c = adicionarItem(vazio(), $congelar({ ...cam }));
+  c = adicionarItem($congelar(c), $congelar({ ...cam, qtd: 3 }));
+  $eq(c.itens.length, 1);
+  $eq(c.itens[0].qtd, 5);
+});
+$t('removerItem remove pelo id', () => {
+  let c = adicionarItem(vazio(), $congelar({ ...cam }));
+  c = adicionarItem($congelar(c), $congelar({ ...bone }));
+  const r = removerItem($congelar(c), 1);
+  $eq(r.itens.map(i => i.id), [2]);
+});
+$t('total = soma de preco * qtd', () => {
+  let c = adicionarItem(vazio(), $congelar({ ...cam }));
+  c = adicionarItem($congelar(c), $congelar({ ...bone }));
+  $eq(total($congelar(c)), 105);
+});
+$t('total de carrinho vazio = 0', () => $eq(total(vazio()), 0));
+@@hints
+- Se algum teste mostrar "Cannot add property" ou "Cannot assign to read only", você está mutando um dado recebido.
+- adicionarItem: use map para atualizar o item existente (devolvendo { ...i, qtd: i.qtd + item.qtd }) e spread para acrescentar um novo.
+- removerItem: filter.
+@@solution
+function adicionarItem(carrinho, item) {
+  const existe = carrinho.itens.some(i => i.id === item.id);
+  const itens = existe
+    ? carrinho.itens.map(i => (i.id === item.id ? { ...i, qtd: i.qtd + item.qtd } : i))
+    : [...carrinho.itens, item];
+  return { ...carrinho, itens };
+}
+
+function removerItem(carrinho, id) {
+  return { ...carrinho, itens: carrinho.itens.filter(i => i.id !== id) };
+}
+
+function total(carrinho) {
+  return carrinho.itens.reduce((soma, i) => soma + i.preco * i.qtd, 0);
+}
+
+@@lesson js-big-o | Desempenho e complexidade (Big O) | 30
+@@body
+Duas soluções corretas podem ter desempenhos radicalmente diferentes. A notação **Big O** descreve como o tempo cresce quando a **entrada** cresce.
+
+| Notação | Nome | Exemplo | 1.000.000 itens |
+| --- | --- | --- | --- |
+| O(1) | constante | acessar `lista[i]`, `set.has(x)` | 1 passo |
+| O(log n) | logarítmica | busca binária | ~20 passos |
+| O(n) | linear | percorrer a lista uma vez | 1 milhão |
+| O(n log n) | quase linear | `sort` | ~20 milhões |
+| O(n²) | quadrática | laço dentro de laço | 1 **trilhão** |
+
+Repare no último: um laço dentro de outro sobre uma lista grande pode levar minutos. Escondido também vale: `includes`, `indexOf` e `find` dentro de um laço **são** um segundo laço.
+
+```js run
+// O(n²): includes percorre a lista de novo a cada volta
+function duplicadoLento(lista) {
+  for (let i = 0; i < lista.length; i++) {
+    if (lista.indexOf(lista[i]) !== i) return true;
+  }
+  return false;
+}
+
+// O(n): Set.has é praticamente instantâneo
+function duplicadoRapido(lista) {
+  const vistos = new Set();
+  for (const x of lista) {
+    if (vistos.has(x)) return true;
+    vistos.add(x);
+  }
+  return false;
+}
+
+const grande = Array.from({ length: 20000 }, (_, i) => i);
+console.time("lento");  duplicadoLento(grande);  console.timeEnd("lento");
+console.time("rapido"); duplicadoRapido(grande); console.timeEnd("rapido");
+```
+
+### Troque tempo por memória
+
+O truque mais comum é usar um `Set` ou `Map` para guardar o que já viu e evitar procurar de novo. Outro é a **busca binária**: em uma lista **ordenada**, compare com o meio e descarte metade a cada passo.
+
+> Meça antes de otimizar. Em listas pequenas a diferença é invisível, e clareza vale mais. Mas saiba reconhecer quando n pode crescer.
+@@task
+Os testes usam listas com **centenas de milhares** de itens. Soluções O(n²) vão estourar o tempo. Implemente `temDuplicado(lista)`, `intersecao(a, b)` (itens presentes nas duas listas, sem repetir, na ordem em que aparecem em `a`) e `buscaBinaria(ordenada, alvo)` (índice do alvo em uma lista **ordenada** crescente, ou `-1`).
+@@starter
+function temDuplicado(lista) {
+}
+
+function intersecao(a, b) {
+}
+
+function buscaBinaria(ordenada, alvo) {
+}
+
+@@tests
+$t('temDuplicado: casos pequenos', () => {
+  $eq(temDuplicado([1, 2, 3]), false);
+  $eq(temDuplicado([1, 2, 1]), true);
+  $eq(temDuplicado([]), false);
+});
+$t('temDuplicado em 300 mil itens (precisa ser O(n))', () => {
+  const grande = Array.from({ length: 300000 }, (_, i) => i);
+  $eq(temDuplicado(grande), false);
+  grande.push(7);
+  $eq(temDuplicado(grande), true);
+}, 6000);
+$t('intersecao: casos pequenos', () => {
+  $eq(intersecao([1, 2, 3, 4], [3, 4, 5]), [3, 4]);
+  $eq(intersecao([1, 1, 2], [1, 2, 2]), [1, 2]);
+  $eq(intersecao([1], [2]), []);
+});
+$t('intersecao em listas de 200 mil itens (precisa ser O(n))', () => {
+  const a = Array.from({ length: 200000 }, (_, i) => i);
+  const b = Array.from({ length: 200000 }, (_, i) => i * 2);
+  $eq(intersecao(a, b).length, 100000);
+}, 6000);
+$t('buscaBinaria acha e não acha', () => {
+  const l = [1, 3, 5, 7, 9, 11];
+  $eq(buscaBinaria(l, 1), 0);
+  $eq(buscaBinaria(l, 11), 5);
+  $eq(buscaBinaria(l, 7), 3);
+  $eq(buscaBinaria(l, 4), -1);
+  $eq(buscaBinaria([], 4), -1);
+});
+$t('buscaBinaria em 2 milhões de itens, 100 mil buscas', () => {
+  const l = Array.from({ length: 2000000 }, (_, i) => i * 2);
+  for (let k = 0; k < 100000; k++) {
+    const alvo = (k * 37) % 4000000;
+    const esperado = alvo % 2 === 0 ? alvo / 2 : -1;
+    if (buscaBinaria(l, alvo) !== esperado) throw new Error('resposta errada para ' + alvo);
+  }
+}, 6000);
+@@hints
+- temDuplicado: percorra guardando o que já viu em um Set; se já tem, devolva true.
+- intersecao: crie new Set(b) e filtre a, depois remova repetidos de novo com Set.
+- buscaBinaria: mantenha inicio e fim; calcule meio = Math.floor((inicio + fim) / 2); se ordenada[meio] é menor que o alvo, inicio = meio + 1; se maior, fim = meio - 1.
+@@solution
+function temDuplicado(lista) {
+  const vistos = new Set();
+  for (const x of lista) {
+    if (vistos.has(x)) return true;
+    vistos.add(x);
+  }
+  return false;
+}
+
+function intersecao(a, b) {
+  const emB = new Set(b);
+  return [...new Set(a.filter(x => emB.has(x)))];
+}
+
+function buscaBinaria(ordenada, alvo) {
+  let inicio = 0;
+  let fim = ordenada.length - 1;
+  while (inicio <= fim) {
+    const meio = Math.floor((inicio + fim) / 2);
+    if (ordenada[meio] === alvo) return meio;
+    if (ordenada[meio] < alvo) inicio = meio + 1;
+    else fim = meio - 1;
+  }
+  return -1;
+}
+
+@@lesson js-padroes-funcionais | once, memoize, pipe e debounce | 35
+@@body
+Quatro utilitários clássicos que usam closures e funções de ordem superior. Você os encontra em bibliotecas como Lodash e em qualquer código profissional.
+
+### `once`: executar só uma vez
+
+```js run
+function once(fn) {
+  let jaFoi = false;
+  let resultado;
+  return (...args) => {
+    if (!jaFoi) {
+      jaFoi = true;
+      resultado = fn(...args);
+    }
+    return resultado;
+  };
+}
+const iniciar = once(() => { console.log("inicializando..."); return 42; });
+console.log(iniciar(), iniciar());
+```
+
+### `memoize`: lembrar resultados
+
+Guarda os resultados em um `Map` e evita recalcular quando os argumentos se repetem.
+
+### `pipe`: compor funções
+
+`pipe(f, g, h)(x)` equivale a `h(g(f(x)))`. É a forma de montar transformações como uma esteira:
+
+```js run
+const pipe = (...fns) => (x) => fns.reduce((acc, fn) => fn(acc), x);
+const limpar = pipe(s => s.trim(), s => s.toLowerCase(), s => s.replaceAll(" ", "-"));
+console.log(limpar("  Olá Mundo Novo "));
+```
+
+### `debounce`: esperar o usuário parar
+
+Executa a função só depois de `ms` sem novas chamadas. Muito usado em campos de busca: em vez de buscar a cada tecla, busca quando a pessoa para de digitar.
+
+```js
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+```
+
+Esse último você já poderia escrever sozinho: guarde o `timer` na closure, cancele o anterior com `clearTimeout` e agende um novo.
+@@task
+Implemente `once(fn)`, `memoize(fn)` (a chave é `JSON.stringify(args)`), `pipe(...fns)` (sem funções, devolve o valor recebido) e `debounce(fn, ms)` (só chama `fn` depois de `ms` sem novas chamadas, usando os argumentos da **última** chamada).
+@@starter
+function once(fn) {
+}
+
+function memoize(fn) {
+}
+
+function pipe(...fns) {
+}
+
+function debounce(fn, ms) {
+}
+
+@@tests
+$t('once executa uma vez e repete o resultado', () => {
+  let n = 0;
+  const f = once(() => ++n);
+  $eq([f(), f(), f()], [1, 1, 1]);
+  $eq(n, 1);
+});
+$t('memoize evita recalcular com os mesmos argumentos', () => {
+  let chamadas = 0;
+  const quad = memoize((x) => { chamadas++; return x * x; });
+  $eq([quad(4), quad(4), quad(5)], [16, 16, 25]);
+  $eq(chamadas, 2);
+});
+$t('memoize funciona com vários argumentos', () => {
+  let chamadas = 0;
+  const soma = memoize((a, b) => { chamadas++; return a + b; });
+  soma(1, 2); soma(1, 2); soma(2, 1);
+  $eq(chamadas, 2);
+});
+$t('pipe aplica as funções da esquerda para a direita', () => {
+  const f = pipe(x => x + 1, x => x * 10, String);
+  $eq(f(2), '30');
+});
+$t('pipe() sem funções devolve o valor', () => $eq(pipe()(7), 7));
+$t('debounce chama uma vez, com os últimos argumentos', async () => {
+  const chamadas = [];
+  const d = debounce((x) => chamadas.push(x), 40);
+  d(1); d(2); d(3);
+  $eq(chamadas, []);
+  await $esperar(90);
+  $eq(chamadas, [3]);
+});
+$t('debounce permite nova execução depois da pausa', async () => {
+  const chamadas = [];
+  const d = debounce((x) => chamadas.push(x), 30);
+  d('a');
+  await $esperar(70);
+  d('b');
+  await $esperar(70);
+  $eq(chamadas, ['a', 'b']);
+});
+@@hints
+- once: guarde uma flag e o resultado na closure.
+- memoize: const cache = new Map(); calcule const chave = JSON.stringify(args).
+- pipe: reduce sobre a lista de funções, partindo do valor recebido.
+- debounce: let timer; a cada chamada, clearTimeout(timer) e depois timer = setTimeout(...).
+@@solution
+function once(fn) {
+  let jaFoi = false;
+  let resultado;
+  return (...args) => {
+    if (!jaFoi) {
+      jaFoi = true;
+      resultado = fn(...args);
+    }
+    return resultado;
+  };
+}
+
+function memoize(fn) {
+  const cache = new Map();
+  return (...args) => {
+    const chave = JSON.stringify(args);
+    if (!cache.has(chave)) cache.set(chave, fn(...args));
+    return cache.get(chave);
+  };
+}
+
+function pipe(...fns) {
+  return (x) => fns.reduce((acc, fn) => fn(acc), x);
+}
+
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+@@lesson js-novidades-es2026 | O que há de novo: ES2026 | 15
+@@body
+Todo ano o comitê **TC39** aprova uma nova edição do ECMAScript, a especificação por trás do JavaScript. A edição **ES2026** foi aprovada pela Ecma International em **30 de junho de 2026**. Segundo o levantamento publicado na época, ela não traz sintaxe nova: são **sete adições à biblioteca padrão**.
+
+| Recurso | Para que serve |
+| --- | --- |
+| `Array.fromAsync()` | Criar array a partir de iteráveis assíncronos ou de promises |
+| `Error.isError()` | Checar se um valor é um erro, mesmo vindo de outro contexto (iframe, worker) |
+| `Math.sumPrecise()` | Somar números de ponto flutuante sem acumular erro de arredondamento |
+| `Uint8Array` base64 e hex | Converter bytes de/para texto base64 e hexadecimal, sem bibliotecas |
+| `Iterator.concat()` | Concatenar iteradores de forma preguiçosa |
+| `JSON.parse` com acesso ao texto-fonte | Ler o texto original de cada valor (por exemplo, números grandes) no `reviver` |
+| `Map.getOrInsert()` e similares ("upsert") | Obter um valor ou inserir um padrão em uma única chamada |
+
+```js
+// Antes: o padrão que aparecia em todo código
+if (!mapa.has(chave)) mapa.set(chave, []);
+mapa.get(chave).push(item);
+
+// Com o upsert do ES2026
+mapa.getOrInsert(chave, []).push(item);
+```
+
+O **Temporal**, a nova API de datas e horas que substitui o complicado `Date`, **não** entrou no ES2026. Pela lista de propostas finalizadas do TC39, ele está previsto para a edição de 2027.
+
+### Como usar novidades com segurança
+
+1. Confira o suporte no **MDN** (tabela de compatibilidade) e no `caniuse.com`.
+2. No Node.js, veja a versão que você usa; no navegador, as versões que seus usuários têm.
+3. Use detecção de recurso (`if (Array.fromAsync) { ... }`) ou um polyfill quando precisar suportar ambientes mais antigos.
+
+> Esta lição é de leitura. Por causa da compatibilidade variável entre navegadores, os exercícios deste site usam só recursos amplamente disponíveis.
+
+@@lesson js-proximos-passos | Rumo ao profissional | 15
+@@body
+Você percorreu os fundamentos de JavaScript. Agora, o que separa quem estuda de quem trabalha com isso é **prática com projetos reais** e algumas ferramentas.
+
+### Trilha sugerida
+
+1. **TypeScript:** a trilha seguinte deste site. Praticamente todo projeto profissional usa.
+2. **Navegador:** DOM, eventos, `fetch`, `localStorage`, formulários.
+3. **Node.js:** servidor HTTP, leitura de arquivos, APIs REST, banco de dados.
+4. **Git e GitHub:** versionar, criar branches, abrir pull requests, revisar código.
+5. **Testes automatizados:** Vitest ou Jest. Escrever testes é parte do trabalho.
+6. **Um framework de interface:** React é o mais pedido no mercado; Vue e Svelte também são ótimos.
+7. **Banco de dados e deploy:** SQL (PostgreSQL), autenticação, publicar na nuvem.
+
+### Projetos para praticar (do menor para o maior)
+
+- Lista de tarefas com filtros e persistência em `localStorage`.
+- Conversor de moedas consumindo uma API pública.
+- Jogo da memória ou campo minado.
+- API de um blog com autenticação e banco de dados.
+- Um projeto seu, que resolva um problema real do seu dia a dia.
+
+### Hábitos que aceleram
+
+- Escreva código **todo dia**, mesmo que pouco. Constância vence maratona.
+- Leia a documentação oficial (MDN) em vez de só tutoriais.
+- Releia seu código antigo: você vai ver como evoluiu e o que melhorar.
+- Faça os **Desafios de lógica** deste site: eles treinam a parte mais importante, a de resolver problemas.
+- Peça revisão: cole seu código para o professor (Claude) e pergunte "o que eu faria diferente aqui?".
+
+> Esta lição é de leitura. Conclua e siga para a trilha de TypeScript, ou volte aos desafios.

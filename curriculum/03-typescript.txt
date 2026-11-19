@@ -1,0 +1,1502 @@
+@@module ts-primeiros-passos | ts | Primeiros passos | O que o TypeScript adiciona ao JavaScript e como ler os erros do compilador.
+
+@@lesson ts-por-que | Por que TypeScript? | 15
+@@body
+**TypeScript (TS)** é JavaScript com **tipos**. Você descreve que forma os dados têm, e o compilador confere o código **antes** de ele rodar. O que o JS descobre só quando o programa quebra na frente do usuário, o TS aponta no editor.
+
+```ts
+function dobro(n: number): number {
+  return n * 2;
+}
+
+dobro(5);      // ok
+dobro("5");    // erro: Argument of type 'string' is not assignable to parameter of type 'number'
+```
+
+### Ideias centrais
+
+- Todo JS válido é TS válido. Você adota tipos aos poucos.
+- Os tipos **somem** na hora de rodar: o compilador gera JavaScript puro. Não existe custo em tempo de execução.
+- Em muitos casos você nem precisa escrever tipos: o TS **infere** (`const x = 5` já é `number`).
+- Beneficios práticos: autocompletar confiável, refatoração segura, documentação viva e menos bugs em produção.
+
+### Neste site
+
+O editor desta trilha usa o compilador do TypeScript no seu navegador, no **modo estrito** (`strict`). Depois de **Verificar**, você vê:
+
+- **Erros de tipo** do compilador, com a linha. Aprender a ler essas mensagens (em inglês) é uma habilidade profissional.
+- **Testes de tipo**: checagens que verificam se os seus tipos têm a forma pedida.
+- **Testes de execução**, como na trilha de JS.
+
+> Quando um erro vier longo, leia a **última** linha dele primeiro: costuma ser a causa real.
+@@task
+Este código tem quatro erros de tipo. Corrija **os valores**, mantendo as anotações: `nome` deve ser o texto `"Ana"`, `idade` o número `30` e `resultado` o `number` resultante de `dobro(5)`.
+@@starter
+const nome: string = 42;
+let idade: number = "30";
+
+function dobro(n: number): number {
+  return n * 2;
+}
+
+const resultado: number = dobro("5");
+
+console.log(nome, idade, resultado);
+@@tests
+$t('nome = "Ana"', () => $eq(nome, 'Ana'));
+$t('idade = 30', () => $eq(idade, 30));
+$t('resultado = 10', () => $eq(resultado, 10));
+@@types
+## nome continua anotado como string
+const __a1: __Equal<typeof nome, string> = true;
+## idade continua anotada como number
+const __a2: __Equal<typeof idade, number> = true;
+## resultado continua anotado como number
+const __a3: __Equal<typeof resultado, number> = true;
+## dobro ainda aceita apenas número
+// @ts-expect-error
+dobro("5");
+@@hints
+- Leia a mensagem: "Type 'number' is not assignable to type 'string'". O valor não combina com o tipo declarado.
+- nome precisa de um texto entre aspas; idade, de um número sem aspas.
+- dobro(5), com 5 sem aspas.
+@@solution
+const nome: string = "Ana";
+let idade: number = 30;
+
+function dobro(n: number): number {
+  return n * 2;
+}
+
+const resultado: number = dobro(5);
+
+console.log(nome, idade, resultado);
+
+@@lesson ts-tipos-basicos | Tipos básicos | 20
+@@body
+### Primitivos
+
+`string`, `number`, `boolean`, `bigint`, `symbol`, `null` e `undefined`. Em modo estrito, `null` e `undefined` **não** cabem em outros tipos por acaso.
+
+### Arrays e tuplas
+
+```ts
+const nomes: string[] = ["Ana", "Rui"];          // ou Array<string>
+const ponto: [number, number] = [10, 20];        // tupla: tamanho e tipos por posição
+const registro: [string, number] = ["Ana", 30];
+```
+
+Uma **tupla** é um array de tamanho fixo em que cada posição tem seu tipo.
+
+### `any`, `unknown`, `void` e `never`
+
+- `any`: desliga a checagem. É uma "saída de emergência" que contamina o código. **Evite.**
+- `unknown`: "não sei o tipo ainda". Você precisa **verificar** antes de usar. É a alternativa segura ao `any`.
+- `void`: função que não devolve nada útil.
+- `never`: valor que nunca acontece (função que sempre lança erro, ou ramo impossível).
+
+### Inferência: não anote tudo
+
+```ts
+const x = 5;          // tipo: 5 (literal, por ser const)
+let y = 5;            // tipo: number
+const lista = [1, 2]; // number[]
+```
+
+Regra prática: **anote** parâmetros de função e retornos públicos; deixe o TS inferir variáveis locais.
+
+### `as const`
+
+Congela o valor e preserva os literais: `["a", "b"] as const` vira `readonly ["a", "b"]`.
+@@task
+Troque cada `any` pelo tipo correto: `nomes` é uma lista de textos, `ponto` é uma tupla `[x, y]` de números, `pessoa` é uma tupla `[nome, idade]` e `somar` recebe uma lista de números e devolve um número.
+@@starter
+const nomes: any = ["Ana", "Bia"];
+const ponto: any = [3, 4];
+const pessoa: any = ["Caio", 28];
+
+function somar(valores: any): any {
+  let total = 0;
+  for (const v of valores) total += v;
+  return total;
+}
+@@tests
+$t('somar([1, 2, 3]) = 6', () => $eq(somar([1, 2, 3]), 6));
+$t('somar([]) = 0', () => $eq(somar([]), 0));
+@@types
+## nomes é string[]
+const __b1: __Equal<typeof nomes, string[]> = true;
+## ponto é a tupla [number, number]
+const __b2: __Equal<typeof ponto, [number, number]> = true;
+## pessoa é a tupla [string, number]
+const __b3: __Equal<typeof pessoa, [string, number]> = true;
+## somar recebe number[]
+const __b4: __Equal<Parameters<typeof somar>[0], number[]> = true;
+## somar devolve number
+const __b5: __Equal<ReturnType<typeof somar>, number> = true;
+## somar rejeita lista de textos
+// @ts-expect-error
+somar(["a"]);
+@@hints
+- string[] para lista de textos; [number, number] para a tupla de dois números.
+- somar(valores: number[]): number
+@@solution
+const nomes: string[] = ["Ana", "Bia"];
+const ponto: [number, number] = [3, 4];
+const pessoa: [string, number] = ["Caio", 28];
+
+function somar(valores: number[]): number {
+  let total = 0;
+  for (const v of valores) total += v;
+  return total;
+}
+
+@@lesson ts-funcoes-tipadas | Funções tipadas | 20
+@@body
+Em funções, anote os **parâmetros** e, em geral, o **retorno**:
+
+```ts
+function formatar(nome: string, sobrenome?: string): string {
+  return sobrenome ? `${nome} ${sobrenome}` : nome;
+}
+```
+
+- `sobrenome?: string` é **opcional**: seu tipo real é `string | undefined`.
+- Valor padrão: `function a(x: number = 10)` torna o parâmetro opcional automaticamente.
+- Rest: `function somar(...n: number[])`.
+
+### Tipos de função
+
+Dá para descrever a forma de uma função (útil para callbacks):
+
+```ts
+type Operacao = (a: number, b: number) => number;
+
+const somar: Operacao = (a, b) => a + b;   // a e b são inferidos como number
+
+function aplicar(fn: (n: number) => number, valor: number): number {
+  return fn(valor);
+}
+```
+
+### `void` e retorno
+
+Um callback tipado como `() => void` pode devolver qualquer coisa que será ignorada. Já uma função anotada com retorno `void` não deve retornar valor.
+
+> **Dica:** sem anotar o retorno, o TS infere. Anotá-lo mesmo assim pega erros onde você **devolve** a coisa errada, não onde a usa.
+@@task
+Escreva: `formatar(nome, sobrenome?)` devolvendo `"Ana Silva"` (ou só `"Ana"` se não houver sobrenome); `somarTudo(...nums)` com rest de números; o tipo `Operacao` e a constante `multiplicar` usando-o; e `aplicar(fn, valor)` com `fn` tipada como função de número para número.
+@@starter
+// 1. formatar: sobrenome é opcional
+function formatar(nome: string, sobrenome: string): string {
+  return "";
+}
+
+// 2. somarTudo aceita qualquer quantidade de números
+function somarTudo(nums: number[]): number {
+  return 0;
+}
+
+// 3. defina o tipo Operacao: (a: number, b: number) => number
+type Operacao = any;
+
+const multiplicar: Operacao = (a, b) => 0;
+
+// 4. aplicar recebe uma função de number para number
+function aplicar(fn: any, valor: number): number {
+  return 0;
+}
+@@tests
+$t('formatar("Ana", "Silva") = "Ana Silva"', () => $eq(formatar('Ana', 'Silva'), 'Ana Silva'));
+$t('formatar("Ana") = "Ana"', () => $eq(formatar('Ana'), 'Ana'));
+$t('somarTudo(1, 2, 3) = 6', () => $eq(somarTudo(1, 2, 3), 6));
+$t('somarTudo() = 0', () => $eq(somarTudo(), 0));
+$t('multiplicar(6, 7) = 42', () => $eq(multiplicar(6, 7), 42));
+$t('aplicar(n => n + 1, 9) = 10', () => $eq(aplicar((n: number) => n + 1, 9), 10));
+@@types
+## formatar aceita só o nome
+formatar("Ana");
+## formatar recusa chamada sem argumentos
+// @ts-expect-error
+formatar();
+## formatar recusa número como nome
+// @ts-expect-error
+formatar(1);
+## somarTudo aceita vários números
+somarTudo(1, 2, 3);
+## somarTudo recusa texto
+// @ts-expect-error
+somarTudo("a");
+## Operacao é (a: number, b: number) => number
+const __c1: __Equal<Operacao, (a: number, b: number) => number> = true;
+## aplicar recusa função que recebe texto
+// @ts-expect-error
+aplicar((s: string) => s.length, 1);
+@@hints
+- sobrenome?: string torna o parâmetro opcional. Dentro da função, trate o caso undefined.
+- Rest parameter: ...nums: number[]
+- type Operacao = (a: number, b: number) => number;
+- fn: (n: number) => number
+@@solution
+function formatar(nome: string, sobrenome?: string): string {
+  return sobrenome ? `${nome} ${sobrenome}` : nome;
+}
+
+function somarTudo(...nums: number[]): number {
+  let total = 0;
+  for (const n of nums) total += n;
+  return total;
+}
+
+type Operacao = (a: number, b: number) => number;
+
+const multiplicar: Operacao = (a, b) => a * b;
+
+function aplicar(fn: (n: number) => number, valor: number): number {
+  return fn(valor);
+}
+
+@@module ts-modelagem | ts | Modelando dados | Interfaces, uniões, narrowing e uniões discriminadas: o coração do TypeScript.
+
+@@lesson ts-objetos-interfaces | Objetos, interfaces e type | 25
+@@body
+Para descrever a forma de um objeto, use `interface` ou `type`:
+
+```ts
+interface Usuario {
+  id: number;
+  nome: string;
+  email?: string;            // opcional
+  readonly criadoEm: Date;   // não pode ser reatribuído
+}
+
+const u: Usuario = { id: 1, nome: "Ana", criadoEm: new Date() };
+// u.criadoEm = new Date();   // erro: Cannot assign to 'criadoEm' because it is a read-only property
+```
+
+- Propriedade **faltando** ou **de tipo errado** gera erro.
+- Propriedade **a mais** em um objeto literal também gera erro (*excess property check*).
+
+### Estendendo
+
+```ts
+interface Admin extends Usuario {
+  permissoes: string[];
+}
+
+type ComRotulo = Usuario & { rotulo: string };   // interseção
+```
+
+### Assinatura de índice
+
+Para objetos de chaves dinâmicas: `interface Mapa { [chave: string]: number }` (ou `Record<string, number>`).
+
+### `interface` ou `type`?
+
+Quase sempre intercambiáveis para objetos. Convenção comum: `interface` para formas de objetos e classes (podem ser estendidas e "reabertas"), `type` para uniões, tuplas e tipos derivados. O importante é ser consistente no projeto.
+@@task
+Defina `Usuario` (`id: number`, `nome: string`, `email` opcional, `criadoEm` somente leitura, do tipo `Date`) e `Admin`, que estende `Usuario` e acrescenta `permissoes: string[]`. Depois implemente `criarUsuario(nome)`, devolvendo um `Usuario` com `id` 1 e `criadoEm` novo.
+@@starter
+interface Usuario {
+}
+
+interface Admin {
+}
+
+function criarUsuario(nome: string): Usuario {
+  return { id: 1, nome, criadoEm: new Date() };
+}
+@@tests
+$t('criarUsuario("Ana") tem id 1 e nome "Ana"', () => {
+  const u = criarUsuario('Ana');
+  $eq([u.id, u.nome], [1, 'Ana']);
+  $ok(u.criadoEm instanceof Date, 'criadoEm deve ser Date');
+});
+@@types
+## Usuario.id é number
+const __d1: __Equal<Usuario["id"], number> = true;
+## Usuario.nome é string
+const __d2: __Equal<Usuario["nome"], string> = true;
+## email é opcional (string | undefined)
+const __d3: __Equal<Usuario["email"], string | undefined> = true;
+## Usuario sem email compila
+const __d4: Usuario = { id: 1, nome: "a", criadoEm: new Date() };
+## Usuario exige nome
+// @ts-expect-error
+const __d5: Usuario = { id: 1, criadoEm: new Date() };
+## criadoEm é somente leitura
+// @ts-expect-error
+__d4.criadoEm = new Date();
+## Admin estende Usuario e tem permissoes
+const __d6: Admin = { id: 1, nome: "a", criadoEm: new Date(), permissoes: ["x"] };
+## Admin exige permissoes
+// @ts-expect-error
+const __d7: Admin = { id: 1, nome: "a", criadoEm: new Date() };
+@@hints
+- Propriedade opcional: email?: string;
+- Somente leitura: readonly criadoEm: Date;
+- interface Admin extends Usuario { permissoes: string[]; }
+@@solution
+interface Usuario {
+  id: number;
+  nome: string;
+  email?: string;
+  readonly criadoEm: Date;
+}
+
+interface Admin extends Usuario {
+  permissoes: string[];
+}
+
+function criarUsuario(nome: string): Usuario {
+  return { id: 1, nome, criadoEm: new Date() };
+}
+
+@@lesson ts-unioes-literais | Uniões e tipos literais | 25
+@@body
+Uma **união** (`A | B`) diz que o valor pode ser de um tipo **ou** de outro:
+
+```ts
+let id: string | number;
+id = "abc";   // ok
+id = 42;      // ok
+// id = true; // erro
+```
+
+### Tipos literais
+
+Um tipo pode ser um valor específico. Combinados em união, formam um "enum leve" e seguro:
+
+```ts
+type Status = "ativo" | "inativo" | "pendente";
+let s: Status = "ativo";
+// s = "cancelado"; // erro: Type '"cancelado"' is not assignable to type 'Status'
+```
+
+Isso é mais simples que `enum` e some totalmente na compilação.
+
+### Estreitamento (narrowing)
+
+Com uma união, você só pode usar o que **existe em todos** os membros, até **verificar** o tipo:
+
+```ts
+function descrever(v: string | number): string {
+  if (typeof v === "string") {
+    return v.toUpperCase();   // aqui v é string
+  }
+  return v.toFixed(2);        // aqui v é number
+}
+```
+
+O TS acompanha o fluxo: depois do `if` com `return`, ele sabe que `v` só pode ser `number`. Outras formas de estreitar: `===`, `in`, `instanceof`, `Array.isArray` e verificar `truthy`.
+@@task
+Crie `Direcao` (`"norte" | "leste" | "sul" | "oeste"`), `girarDireita(d)` (norte → leste → sul → oeste → norte) e `descrever(valor: string | number)`: texto em MAIÚSCULAS ou número com 2 casas decimais (`3.14159` vira `"3.14"`).
+@@starter
+type Direcao = string;
+
+function girarDireita(d: Direcao): Direcao {
+  return d;
+}
+
+function descrever(valor: any): string {
+  return "";
+}
+@@tests
+$t('girarDireita percorre norte → leste → sul → oeste → norte', () => {
+  $eq(girarDireita('norte'), 'leste');
+  $eq(girarDireita('leste'), 'sul');
+  $eq(girarDireita('sul'), 'oeste');
+  $eq(girarDireita('oeste'), 'norte');
+});
+$t('descrever("oi") = "OI"', () => $eq(descrever('oi'), 'OI'));
+$t('descrever(3.14159) = "3.14"', () => $eq(descrever(3.14159), '3.14'));
+@@types
+## Direcao é a união dos 4 pontos cardeais
+const __e1: __Equal<Direcao, "norte" | "leste" | "sul" | "oeste"> = true;
+## girarDireita recusa direção inexistente
+// @ts-expect-error
+girarDireita("cima");
+## girarDireita devolve Direcao
+const __e2: __Equal<ReturnType<typeof girarDireita>, Direcao> = true;
+## descrever aceita string e number
+const __e3: __Equal<Parameters<typeof descrever>[0], string | number> = true;
+## descrever recusa boolean
+// @ts-expect-error
+descrever(true);
+@@hints
+- type Direcao = "norte" | "leste" | "sul" | "oeste";
+- Para girar, um objeto Record<Direcao, Direcao> ou um switch resolve.
+- Em descrever, use typeof valor === "string" para estreitar.
+@@solution
+type Direcao = "norte" | "leste" | "sul" | "oeste";
+
+function girarDireita(d: Direcao): Direcao {
+  switch (d) {
+    case "norte": return "leste";
+    case "leste": return "sul";
+    case "sul": return "oeste";
+    case "oeste": return "norte";
+  }
+}
+
+function descrever(valor: string | number): string {
+  if (typeof valor === "string") return valor.toUpperCase();
+  return valor.toFixed(2);
+}
+
+@@lesson ts-narrowing-unknown | unknown e type guards | 25
+@@body
+Dados que vêm de fora do programa (JSON de uma API, um formulário, `localStorage`) **não têm tipo garantido**. O tipo seguro para isso é `unknown`.
+
+```ts
+let dado: unknown = JSON.parse('{"a":1}');
+// dado.a;               // erro: 'dado' is of type 'unknown'
+if (typeof dado === "object" && dado !== null && "a" in dado) {
+  console.log(dado.a);   // agora pode
+}
+```
+
+Com `any`, o erro nunca apareceria, e o programa quebraria em produção. Com `unknown`, o compilador **obriga** a verificar.
+
+### Type guards (funções de guarda)
+
+Uma função cujo retorno é um **predicado de tipo** (`x is T`) ensina o compilador a estreitar:
+
+```ts
+function ehTexto(x: unknown): x is string {
+  return typeof x === "string";
+}
+
+function tamanho(x: unknown): number {
+  return ehTexto(x) ? x.length : 0;   // aqui x é string
+}
+```
+
+### Ferramentas de estreitamento
+
+`typeof x === "number"`, `x instanceof Date`, `Array.isArray(x)`, `"campo" in obj`, `x === null` e comparações com literais.
+
+> O compilador confia no que o seu guarda afirma. Se o guarda mentir, o erro reaparece em tempo de execução. Escreva guardas com cuidado.
+@@task
+Implemente: `ehString(x: unknown): x is string`; `processar(entrada: unknown): string` (texto → `trim()`; número → `String(n)`; array → itens unidos por `", "`; qualquer outra coisa → `"desconhecido"`); e `parseIdade(texto: unknown): number | null` (devolve o número se for um texto de inteiro entre 0 e 150, senão `null`).
+@@starter
+function ehString(x: unknown): boolean {
+  return typeof x === "string";
+}
+
+function processar(entrada: unknown): string {
+  return "desconhecido";
+}
+
+function parseIdade(texto: unknown): number | null {
+  return null;
+}
+@@tests
+$t('ehString', () => { $eq(ehString('a'), true); $eq(ehString(1), false); });
+$t('processar("  oi  ") = "oi"', () => $eq(processar('  oi  '), 'oi'));
+$t('processar(42) = "42"', () => $eq(processar(42), '42'));
+$t('processar([1, "a", 2]) = "1, a, 2"', () => $eq(processar([1, 'a', 2]), '1, a, 2'));
+$t('processar(null) = "desconhecido"', () => $eq(processar(null), 'desconhecido'));
+$t('parseIdade("30") = 30', () => $eq(parseIdade('30'), 30));
+$t('parseIdade("200"), ("abc"), (30) = null', () => { $eq(parseIdade('200'), null); $eq(parseIdade('abc'), null); $eq(parseIdade(30), null); });
+$t('parseIdade("0") = 0', () => $eq(parseIdade('0'), 0));
+@@types
+## ehString é um type guard (x is string)
+declare const __g1: unknown;
+if (ehString(__g1)) { const __g2: string = __g1; }
+## ehString recebe unknown
+const __g3: __Equal<Parameters<typeof ehString>[0], unknown> = true;
+## processar devolve string
+const __g4: __Equal<ReturnType<typeof processar>, string> = true;
+## parseIdade devolve number | null
+const __g5: __Equal<ReturnType<typeof parseIdade>, number | null> = true;
+@@hints
+- A assinatura do guarda é: function ehString(x: unknown): x is string
+- Em processar, estreite com typeof e Array.isArray antes de usar métodos.
+- parseIdade: confirme que é string e que combina com /^\d+$/; converta com Number e confira o intervalo.
+@@solution
+function ehString(x: unknown): x is string {
+  return typeof x === "string";
+}
+
+function processar(entrada: unknown): string {
+  if (ehString(entrada)) return entrada.trim();
+  if (typeof entrada === "number") return String(entrada);
+  if (Array.isArray(entrada)) return entrada.join(", ");
+  return "desconhecido";
+}
+
+function parseIdade(texto: unknown): number | null {
+  if (!ehString(texto) || !/^\d+$/.test(texto)) return null;
+  const n = Number(texto);
+  return n >= 0 && n <= 150 ? n : null;
+}
+
+@@lesson ts-unioes-discriminadas | Uniões discriminadas | 30
+@@body
+O padrão mais poderoso do TS: modelar estados diferentes como uma união em que cada membro tem uma propriedade-**etiqueta** (`tipo`, `kind`, `status`) com um valor literal.
+
+```ts
+type Estado =
+  | { status: "carregando" }
+  | { status: "sucesso"; dados: string[] }
+  | { status: "erro"; mensagem: string };
+
+function mostrar(e: Estado): string {
+  switch (e.status) {
+    case "carregando": return "Aguarde...";
+    case "sucesso":    return e.dados.join(", ");   // aqui só existe .dados
+    case "erro":       return e.mensagem;           // aqui só existe .mensagem
+  }
+}
+```
+
+Dentro de cada `case`, o TS sabe exatamente qual membro é, e só deixa usar as propriedades dele. Isso torna **estados impossíveis impossíveis de escrever**: não existe um `{ status: "carregando", mensagem: ... }`.
+
+### Verificação de exaustividade
+
+Se você adicionar um novo estado e esquecer de tratá-lo, o compilador deve avisar. O truque é atribuir o valor restante a `never`:
+
+```ts
+function falhar(x: never): never {
+  throw new Error("Caso não tratado: " + JSON.stringify(x));
+}
+// no switch: default: return falhar(e);
+```
+
+Se todos os casos foram tratados, `e` é `never` no `default`. Se faltar um, vira erro de compilação.
+@@task
+Modele `Forma` como união discriminada pelo campo `tipo`: `"circulo"` (`raio`), `"quadrado"` (`lado`) e `"retangulo"` (`largura` e `altura`). Implemente `area(f: Forma): number` com `switch` exaustivo (círculo: π·raio²).
+@@starter
+type Forma = any;
+
+function area(f: Forma): number {
+  return 0;
+}
+@@tests
+$t('área do círculo de raio 2', () => $perto(area({ tipo: 'circulo', raio: 2 }), Math.PI * 4));
+$t('área do quadrado de lado 3 = 9', () => $eq(area({ tipo: 'quadrado', lado: 3 }), 9));
+$t('área do retângulo 2 × 5 = 10', () => $eq(area({ tipo: 'retangulo', largura: 2, altura: 5 }), 10));
+@@types
+## círculo válido compila
+area({ tipo: "circulo", raio: 1 });
+## quadrado válido compila
+area({ tipo: "quadrado", lado: 1 });
+## retângulo válido compila
+area({ tipo: "retangulo", largura: 1, altura: 2 });
+## forma inexistente é recusada
+// @ts-expect-error
+area({ tipo: "triangulo", base: 1 });
+## círculo sem raio é recusado
+// @ts-expect-error
+area({ tipo: "circulo" });
+## quadrado com campo de círculo é recusado
+// @ts-expect-error
+area({ tipo: "quadrado", raio: 1 });
+@@hints
+- type Forma = { tipo: "circulo"; raio: number } | { tipo: "quadrado"; lado: number } | ...
+- switch (f.tipo) { case "circulo": return Math.PI * f.raio ** 2; ... }
+- Cada case enxerga só os campos do seu membro da união.
+@@solution
+type Forma =
+  | { tipo: "circulo"; raio: number }
+  | { tipo: "quadrado"; lado: number }
+  | { tipo: "retangulo"; largura: number; altura: number };
+
+function area(f: Forma): number {
+  switch (f.tipo) {
+    case "circulo": return Math.PI * f.raio ** 2;
+    case "quadrado": return f.lado ** 2;
+    case "retangulo": return f.largura * f.altura;
+    default: {
+      const _exaustivo: never = f;
+      return _exaustivo;
+    }
+  }
+}
+
+@@module ts-genericos | ts | Genéricos e utilitários | Tipos que funcionam com outros tipos: reaproveitamento sem perder segurança.
+
+@@lesson ts-genericos | Genéricos | 30
+@@body
+Como escrever uma função que funciona com **qualquer** tipo, mas lembra qual é? `any` perde a informação. **Genéricos** guardam o tipo em uma "variável de tipo", por convenção `T`:
+
+```ts
+function identidade<T>(valor: T): T {
+  return valor;
+}
+
+const a = identidade("oi");   // a: string
+const b = identidade(42);     // b: number
+```
+
+O TS **infere** `T` a partir do argumento. A mesma função serve para tudo e mantém a segurança.
+
+### Mais de um parâmetro de tipo e restrições
+
+```ts
+function mapear<T, U>(lista: T[], fn: (item: T) => U): U[] {
+  return lista.map(fn);
+}
+
+// restrição: T precisa ter .length
+function tamanho<T extends { length: number }>(x: T): number {
+  return x.length;
+}
+tamanho("abc");       // ok
+tamanho([1, 2]);      // ok
+// tamanho(5);        // erro: number não tem length
+```
+
+### Interfaces e tipos genéricos
+
+```ts
+interface Caixa<T> {
+  valor: T;
+}
+const c: Caixa<string> = { valor: "oi" };
+```
+
+Você já usa genéricos todos os dias: `Array<T>`, `Promise<T>`, `Map<K, V>`.
+
+> Regra de ouro: só introduza um genérico quando o tipo de entrada **se relaciona** com o de saída. Se `T` aparece uma única vez na assinatura, provavelmente não precisa de genérico.
+@@task
+Implemente: `primeiroElemento<T>(lista: T[]): T | undefined`; `mapear<T, U>(lista, fn)`; a interface genérica `Caixa<T>` (com `valor: T`) e `criarCaixa<T>(valor: T): Caixa<T>`; e `comLength<T extends { length: number }>(x: T): number`.
+@@starter
+function primeiroElemento(lista: any[]): any {
+  return lista[0];
+}
+
+function mapear(lista: any[], fn: (item: any) => any): any[] {
+  return lista.map(fn);
+}
+
+interface Caixa {
+  valor: any;
+}
+
+function criarCaixa(valor: any): Caixa {
+  return { valor };
+}
+
+function comLength(x: any): number {
+  return x.length;
+}
+@@tests
+$t('primeiroElemento([7, 8]) = 7 e ([]) = undefined', () => { $eq(primeiroElemento([7, 8]), 7); $eq(primeiroElemento([]), undefined); });
+$t('mapear([1, 2, 3], n => n * 2)', () => $eq(mapear([1, 2, 3], (n: number) => n * 2), [2, 4, 6]));
+$t('criarCaixa("x").valor = "x"', () => $eq(criarCaixa('x').valor, 'x'));
+$t('comLength("abc") = 3 e comLength([1, 2]) = 2', () => { $eq(comLength('abc'), 3); $eq(comLength([1, 2]), 2); });
+@@types
+## primeiroElemento infere T[] → T | undefined
+const __h1 = primeiroElemento([1, 2]);
+const __h1t: __Equal<typeof __h1, number | undefined> = true;
+## primeiroElemento infere string
+const __h2 = primeiroElemento(["a"]);
+const __h2t: __Equal<typeof __h2, string | undefined> = true;
+## mapear infere o tipo de saída
+const __h3 = mapear([1, 2], (n) => String(n));
+const __h3t: __Equal<typeof __h3, string[]> = true;
+## criarCaixa infere Caixa<string>
+const __h4 = criarCaixa("x");
+const __h4t: __Equal<typeof __h4, Caixa<string>> = true;
+## Caixa<number>.valor é number
+const __h5: __Equal<Caixa<number>["valor"], number> = true;
+## comLength recusa quem não tem length
+// @ts-expect-error
+comLength(5);
+## comLength aceita array
+comLength([1, 2]);
+@@hints
+- function primeiroElemento<T>(lista: T[]): T | undefined
+- function mapear<T, U>(lista: T[], fn: (item: T) => U): U[]
+- interface Caixa<T> { valor: T }
+- comLength<T extends { length: number }>(x: T)
+@@solution
+function primeiroElemento<T>(lista: T[]): T | undefined {
+  return lista[0];
+}
+
+function mapear<T, U>(lista: T[], fn: (item: T) => U): U[] {
+  return lista.map(fn);
+}
+
+interface Caixa<T> {
+  valor: T;
+}
+
+function criarCaixa<T>(valor: T): Caixa<T> {
+  return { valor };
+}
+
+function comLength<T extends { length: number }>(x: T): number {
+  return x.length;
+}
+
+@@lesson ts-utility-types | Utility types | 25
+@@body
+O TS traz tipos prontos que **transformam** outros tipos. Você os usa para derivar formas em vez de repetir campos:
+
+| Utility | Faz | Exemplo |
+| --- | --- | --- |
+| `Partial<T>` | Todos os campos opcionais | formulário de edição |
+| `Required<T>` | Todos obrigatórios | |
+| `Readonly<T>` | Todos somente leitura | |
+| `Pick<T, K>` | Só os campos `K` | `Pick<User, "id" \| "nome">` |
+| `Omit<T, K>` | Todos, menos `K` | `Omit<User, "senha">` |
+| `Record<K, V>` | Objeto de chaves `K` e valores `V` | `Record<string, number>` |
+| `ReturnType<F>` | Tipo devolvido pela função | |
+| `Parameters<F>` | Tupla dos parâmetros | |
+| `Awaited<T>` | Valor de dentro de uma Promise | |
+| `NonNullable<T>` | Remove `null` e `undefined` | |
+
+```ts
+interface Produto {
+  id: number;
+  nome: string;
+  preco: number;
+}
+
+type NovoProduto = Omit<Produto, "id">;          // sem id (ainda não existe)
+type Edicao = Partial<NovoProduto>;              // qualquer subconjunto
+type Resumo = Pick<Produto, "id" | "nome">;
+```
+
+**Ganho:** se `Produto` ganhar um campo, os tipos derivados acompanham automaticamente. É o princípio **DRY** aplicado a tipos.
+@@task
+Com `Produto` dado, defina: `NovoProduto` (sem `id`), `AtualizacaoProduto` (qualquer subconjunto de `nome`, `preco` e `estoque`, sem `id`), `ResumoProduto` (só `id` e `nome`), `EstoquePorId` (objeto de chave `number` e valor `number`) e a função `atualizar(produto, mudancas)`, que devolve um **novo** produto com as mudanças aplicadas.
+@@starter
+interface Produto {
+  id: number;
+  nome: string;
+  preco: number;
+  estoque: number;
+}
+
+type NovoProduto = any;
+type AtualizacaoProduto = any;
+type ResumoProduto = any;
+type EstoquePorId = any;
+
+function atualizar(produto: Produto, mudancas: AtualizacaoProduto): Produto {
+  return produto;
+}
+@@tests
+$t('atualizar aplica as mudanças sem alterar o original', () => {
+  const p: Produto = { id: 1, nome: 'Lápis', preco: 2, estoque: 10 };
+  const r = atualizar(p, { preco: 3 });
+  $eq(r, { id: 1, nome: 'Lápis', preco: 3, estoque: 10 });
+  $eq(p.preco, 2);
+});
+$t('atualizar com várias mudanças', () => $eq(atualizar({ id: 1, nome: 'A', preco: 1, estoque: 1 }, { nome: 'B', estoque: 0 }), { id: 1, nome: 'B', preco: 1, estoque: 0 }));
+@@types
+## NovoProduto é Produto sem id
+const __i1: __Same<NovoProduto, { nome: string; preco: number; estoque: number }> = true;
+## AtualizacaoProduto tem todos os campos opcionais
+const __i2: __Same<AtualizacaoProduto, { nome?: string; preco?: number; estoque?: number }> = true;
+## AtualizacaoProduto aceita objeto vazio
+const __i3: AtualizacaoProduto = {};
+## AtualizacaoProduto não aceita id
+// @ts-expect-error
+const __i4: AtualizacaoProduto = { id: 1 };
+## ResumoProduto tem só id e nome
+const __i5: __Same<ResumoProduto, { id: number; nome: string }> = true;
+## EstoquePorId mapeia number → number
+const __i6: __Same<EstoquePorId, Record<number, number>> = true;
+@@hints
+- Omit<Produto, "id">
+- Partial<Omit<Produto, "id">>
+- Pick<Produto, "id" | "nome">
+- Record<number, number>
+- atualizar: return { ...produto, ...mudancas };
+@@solution
+interface Produto {
+  id: number;
+  nome: string;
+  preco: number;
+  estoque: number;
+}
+
+type NovoProduto = Omit<Produto, "id">;
+type AtualizacaoProduto = Partial<Omit<Produto, "id">>;
+type ResumoProduto = Pick<Produto, "id" | "nome">;
+type EstoquePorId = Record<number, number>;
+
+function atualizar(produto: Produto, mudancas: AtualizacaoProduto): Produto {
+  return { ...produto, ...mudancas };
+}
+
+@@lesson ts-keyof-typeof | keyof, typeof e tipos indexados | 30
+@@body
+### `keyof`: as chaves de um tipo como união
+
+```ts
+interface Pessoa { nome: string; idade: number }
+type Chave = keyof Pessoa;   // "nome" | "idade"
+```
+
+### `typeof`: o tipo de um **valor**
+
+Em posição de tipo, `typeof` extrai o tipo de uma variável existente. Combinado com `as const`, você define os dados **uma vez** e deriva os tipos deles:
+
+```ts
+const CORES = {
+  vermelho: "#f00",
+  verde: "#0f0",
+  azul: "#00f",
+} as const;
+
+type NomeCor = keyof typeof CORES;      // "vermelho" | "verde" | "azul"
+type ValorCor = typeof CORES[NomeCor];  // "#f00" | "#0f0" | "#00f"
+```
+
+### Tipos indexados `T[K]`
+
+Acessam o tipo de uma propriedade: `Pessoa["idade"]` é `number`.
+
+### O padrão `<T, K extends keyof T>`
+
+Uma função que lê uma propriedade **com segurança**: a chave só pode ser uma que existe, e o retorno tem o tipo certo daquela propriedade.
+
+```ts
+function pegar<T, K extends keyof T>(obj: T, chave: K): T[K] {
+  return obj[chave];
+}
+
+const p = { nome: "Ana", idade: 30 };
+const n = pegar(p, "nome");     // string
+const i = pegar(p, "idade");    // number
+// pegar(p, "email");           // erro: "email" não está em keyof typeof p
+```
+@@task
+Com `CORES` dado, derive `NomeCor` e `ValorCor`. Implemente `pegar(obj, chave)` com o padrão `<T, K extends keyof T>` e `ordenarPor<T>(lista: T[], chave: keyof T): T[]` (cópia ordenada em ordem crescente pela propriedade, sem alterar a original; use `<` e `>` para comparar).
+@@starter
+const CORES = {
+  vermelho: "#f00",
+  verde: "#0f0",
+  azul: "#00f",
+} as const;
+
+type NomeCor = string;
+type ValorCor = string;
+
+function pegar(obj: any, chave: string): any {
+  return obj[chave];
+}
+
+function ordenarPor(lista: any[], chave: string): any[] {
+  return lista;
+}
+@@tests
+$t('pegar({ a: 1 }, "a") = 1', () => $eq(pegar({ a: 1 }, 'a'), 1));
+$t('ordenarPor ordena por idade', () => {
+  const gente = [{ nome: 'C', idade: 40 }, { nome: 'A', idade: 20 }, { nome: 'B', idade: 30 }];
+  $eq(ordenarPor(gente, 'idade').map((p: any) => p.nome), ['A', 'B', 'C']);
+});
+$t('ordenarPor ordena por nome sem alterar a original', () => {
+  const gente = [{ nome: 'Rui', idade: 1 }, { nome: 'Ana', idade: 2 }];
+  const r = ordenarPor(gente, 'nome');
+  $eq(r.map((p: any) => p.nome), ['Ana', 'Rui']);
+  $eq(gente.map(p => p.nome), ['Rui', 'Ana']);
+});
+@@types
+## NomeCor é a união das chaves de CORES
+const __j1: __Equal<NomeCor, "vermelho" | "verde" | "azul"> = true;
+## ValorCor é a união dos valores literais
+const __j2: __Equal<ValorCor, "#f00" | "#0f0" | "#00f"> = true;
+## pegar devolve o tipo da propriedade (string)
+const __j3 = pegar({ a: 1, b: "x" }, "b");
+const __j3t: __Equal<typeof __j3, string> = true;
+## pegar devolve o tipo da propriedade (number)
+const __j4 = pegar({ a: 1, b: "x" }, "a");
+const __j4t: __Equal<typeof __j4, number> = true;
+## pegar recusa chave inexistente
+// @ts-expect-error
+pegar({ a: 1 }, "z");
+## ordenarPor recusa chave inexistente
+// @ts-expect-error
+ordenarPor([{ a: 1 }], "z");
+## ordenarPor preserva o tipo dos itens
+const __j5 = ordenarPor([{ a: 1 }], "a");
+const __j5t: __Equal<typeof __j5, { a: number }[]> = true;
+@@hints
+- type NomeCor = keyof typeof CORES;
+- type ValorCor = typeof CORES[NomeCor];
+- function pegar<T, K extends keyof T>(obj: T, chave: K): T[K]
+- ordenarPor: [...lista].sort((a, b) => a[chave] < b[chave] ? -1 : a[chave] > b[chave] ? 1 : 0)
+@@solution
+const CORES = {
+  vermelho: "#f00",
+  verde: "#0f0",
+  azul: "#00f",
+} as const;
+
+type NomeCor = keyof typeof CORES;
+type ValorCor = typeof CORES[NomeCor];
+
+function pegar<T, K extends keyof T>(obj: T, chave: K): T[K] {
+  return obj[chave];
+}
+
+function ordenarPor<T>(lista: T[], chave: keyof T): T[] {
+  return [...lista].sort((a, b) => (a[chave] < b[chave] ? -1 : a[chave] > b[chave] ? 1 : 0));
+}
+
+@@module ts-avancado | ts | Tipos avançados | Tipos mapeados, condicionais, classes e código assíncrono tipado.
+
+@@lesson ts-mapped-conditional | Tipos mapeados e condicionais | 35
+@@body
+Tipos também podem ser **calculados**, como funções de tipos.
+
+### Tipos mapeados
+
+Percorrem as chaves de um tipo e geram um novo:
+
+```ts
+type Opcionais<T> = { [K in keyof T]?: T[K] };   // é o Partial
+type Somente<T> = { readonly [K in keyof T]: T[K] };  // é o Readonly
+type Mutavel<T> = { -readonly [K in keyof T]: T[K] }; // o "-" remove o modificador
+```
+
+Com `as`, você filtra ou renomeia chaves:
+
+```ts
+type SoNumeros<T> = {
+  [K in keyof T as T[K] extends number ? K : never]: T[K];
+};
+```
+
+### Tipos condicionais
+
+`T extends U ? X : Y` escolhe um tipo conforme uma condição:
+
+```ts
+type ETexto<T> = T extends string ? "sim" : "não";
+type A = ETexto<"oi">;   // "sim"
+type B = ETexto<42>;     // "não"
+```
+
+### `infer`: capturar um pedaço do tipo
+
+```ts
+type Desembrulhar<T> = T extends Promise<infer U> ? U : T;
+type X = Desembrulhar<Promise<number>>;   // number
+
+type ElementoDe<T> = T extends (infer E)[] ? E : never;
+type Y = ElementoDe<string[]>;            // string
+```
+
+É assim que `ReturnType` e `Awaited` são escritos por dentro.
+
+> Tipos avançados são ferramentas para **bibliotecas e infraestrutura**. No código de aplicação do dia a dia, tipos simples e legíveis são melhores.
+@@task
+Defina: `Nullable<T>` (cada propriedade vira `T[K] | null`), `Mutavel<T>` (remove `readonly` de cada propriedade), `SoStrings<T>` (mantém apenas as propriedades cujo valor é `string`), `Desembrulhar<T>` (se `T` é `Promise<U>`, vira `U`; senão `T`) e `ElementoDe<T>` (tipo dos itens de um array; `never` se não for array).
+@@starter
+type Nullable<T> = any;
+type Mutavel<T> = any;
+type SoStrings<T> = any;
+type Desembrulhar<T> = any;
+type ElementoDe<T> = any;
+@@tests
+@@types
+## Nullable
+const __k1: __Same<Nullable<{ a: number; b: string }>, { a: number | null; b: string | null }> = true;
+## Mutavel remove readonly
+const __k2: Mutavel<{ readonly a: number }> = { a: 1 };
+__k2.a = 2;
+## Mutavel mantém os tipos
+const __k3: __Same<Mutavel<{ readonly a: number; readonly b: string }>, { a: number; b: string }> = true;
+## SoStrings filtra as propriedades
+const __k4: __Same<SoStrings<{ nome: string; idade: number; cidade: string }>, { nome: string; cidade: string }> = true;
+## Desembrulhar<Promise<number>> = number
+const __k5: __Equal<Desembrulhar<Promise<number>>, number> = true;
+## Desembrulhar<string> = string
+const __k6: __Equal<Desembrulhar<string>, string> = true;
+## ElementoDe<string[]> = string
+const __k7: __Equal<ElementoDe<string[]>, string> = true;
+## ElementoDe<number> = never
+const __k8: __Equal<ElementoDe<number>, never> = true;
+@@hints
+- Nullable: { [K in keyof T]: T[K] | null }
+- Mutavel: { -readonly [K in keyof T]: T[K] }
+- SoStrings: { [K in keyof T as T[K] extends string ? K : never]: T[K] }
+- Desembrulhar: T extends Promise<infer U> ? U : T
+- ElementoDe: T extends (infer E)[] ? E : never
+@@solution
+type Nullable<T> = { [K in keyof T]: T[K] | null };
+type Mutavel<T> = { -readonly [K in keyof T]: T[K] };
+type SoStrings<T> = { [K in keyof T as T[K] extends string ? K : never]: T[K] };
+type Desembrulhar<T> = T extends Promise<infer U> ? U : T;
+type ElementoDe<T> = T extends (infer E)[] ? E : never;
+
+@@lesson ts-classes | Classes em TypeScript | 30
+@@body
+O TS acrescenta às classes de JS **modificadores de acesso** e checagem de tipos:
+
+```ts
+abstract class Forma {
+  constructor(public readonly nome: string) {}   // "parameter property"
+
+  abstract area(): number;                       // subclasses DEVEM implementar
+
+  descrever(): string {
+    return `${this.nome}: ${this.area().toFixed(2)}`;
+  }
+}
+
+class Circulo extends Forma {
+  constructor(private raio: number) {
+    super("Círculo");
+  }
+  area(): number {
+    return Math.PI * this.raio ** 2;
+  }
+}
+```
+
+| Modificador | Quem acessa |
+| --- | --- |
+| `public` (padrão) | Qualquer um |
+| `protected` | A classe e suas subclasses |
+| `private` | Só a própria classe (checado em compilação) |
+| `readonly` | Pode ser atribuído só na declaração ou no construtor |
+
+- `abstract`: a classe não pode ser instanciada diretamente, serve de base.
+- **Parameter properties:** `constructor(private raio: number)` declara e atribui o campo em uma linha.
+- `private` do TS é verificado só na compilação. O `#campo` do JS é privado de verdade, também em tempo de execução.
+
+### `implements`
+
+Uma classe pode se comprometer com uma interface:
+
+```ts
+interface Descritivel { descrever(): string }
+class Item implements Descritivel {
+  descrever() { return "item"; }
+}
+```
+@@task
+Com `Forma` dada, implemente `Circulo` (privado `raio`, nome `"Círculo"`) e `Quadrado` (privado `lado`, nome `"Quadrado"`), cada um com `area()`. Depois escreva `somaAreas(formas: Forma[]): number`.
+@@starter
+abstract class Forma {
+  constructor(public readonly nome: string) {}
+
+  abstract area(): number;
+
+  descrever(): string {
+    return `${this.nome} com área ${this.area().toFixed(2)}`;
+  }
+}
+
+class Circulo {
+}
+
+class Quadrado {
+}
+
+function somaAreas(formas: Forma[]): number {
+  return 0;
+}
+@@tests
+$t('Circulo(1).descrever()', () => $eq(new Circulo(1).descrever(), 'Círculo com área 3.14'));
+$t('Quadrado(3).descrever()', () => $eq(new Quadrado(3).descrever(), 'Quadrado com área 9.00'));
+$t('Circulo e Quadrado herdam de Forma', () => {
+  $ok(new Circulo(1) instanceof Forma, 'Circulo deve estender Forma');
+  $ok(new Quadrado(1) instanceof Forma, 'Quadrado deve estender Forma');
+});
+$t('somaAreas([Quadrado(2), Quadrado(3)]) = 13', () => $eq(somaAreas([new Quadrado(2), new Quadrado(3)]), 13));
+$t('somaAreas([]) = 0', () => $eq(somaAreas([]), 0));
+@@types
+## Circulo é uma Forma
+const __l1: Forma = new Circulo(1);
+## Quadrado é uma Forma
+const __l2: Forma = new Quadrado(1);
+## Forma abstrata não pode ser instanciada
+// @ts-expect-error
+new Forma("x");
+## raio é privado
+// @ts-expect-error
+new Circulo(1).raio;
+## lado é privado
+// @ts-expect-error
+new Quadrado(1).lado;
+## nome é somente leitura
+// @ts-expect-error
+new Circulo(1).nome = "x";
+@@hints
+- class Circulo extends Forma { constructor(private raio: number) { super("Círculo"); } area(): number { ... } }
+- Chame super(...) antes de usar this.
+- somaAreas: formas.reduce((soma, f) => soma + f.area(), 0)
+@@solution
+abstract class Forma {
+  constructor(public readonly nome: string) {}
+
+  abstract area(): number;
+
+  descrever(): string {
+    return `${this.nome} com área ${this.area().toFixed(2)}`;
+  }
+}
+
+class Circulo extends Forma {
+  constructor(private raio: number) {
+    super("Círculo");
+  }
+
+  area(): number {
+    return Math.PI * this.raio ** 2;
+  }
+}
+
+class Quadrado extends Forma {
+  constructor(private lado: number) {
+    super("Quadrado");
+  }
+
+  area(): number {
+    return this.lado ** 2;
+  }
+}
+
+function somaAreas(formas: Forma[]): number {
+  return formas.reduce((soma, f) => soma + f.area(), 0);
+}
+
+@@lesson ts-async-tipado | Código assíncrono tipado | 30
+@@body
+Em TS, uma função `async` devolve `Promise<T>`, onde `T` é o tipo do valor final:
+
+```ts
+async function buscarNome(id: number): Promise<string> {
+  return "Ana";
+}
+
+const nome = await buscarNome(1);   // string
+```
+
+### Tipar respostas de API
+
+O compilador não sabe o que a rede devolve. Você declara a forma esperada e valida na fronteira:
+
+```ts
+interface Usuario { id: number; nome: string }
+
+async function carregar(id: number): Promise<Usuario> {
+  const resposta = await fetch(`/api/usuarios/${id}`);
+  if (!resposta.ok) throw new Error("Falha ao carregar");
+  return (await resposta.json()) as Usuario;   // "as" é uma promessa sua: valide de verdade em produção
+}
+```
+
+### `Promise.all` com tipos
+
+```ts
+const [a, b] = await Promise.all([buscarNome(1), Promise.resolve(42)]);
+// a: string, b: number  (o TS mantém a tupla!)
+```
+
+### `catch` e `unknown`
+
+No modo estrito, a variável do `catch` é `unknown`. Verifique antes de usar:
+
+```ts
+try {
+  await carregar(1);
+} catch (e) {
+  const mensagem = e instanceof Error ? e.message : String(e);
+}
+```
+
+`Awaited<T>` desembrulha a promise: `Awaited<Promise<string>>` é `string`.
+@@task
+O starter traz uma "API" falsa, `buscarNoServidor`. Implemente: `carregarUsuario(id): Promise<Usuario>`, `carregarVarios(ids): Promise<Usuario[]>` (em paralelo) e `tentarCarregar(id): Promise<Usuario | null>` (devolve `null` se der erro).
+@@starter
+interface Usuario {
+  id: number;
+  nome: string;
+}
+
+function buscarNoServidor(id: number): Promise<Usuario> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id <= 0) reject(new Error("não encontrado"));
+      else resolve({ id, nome: `Usuário ${id}` });
+    }, 20);
+  });
+}
+
+async function carregarUsuario(id: number) {
+}
+
+async function carregarVarios(ids: number[]) {
+}
+
+async function tentarCarregar(id: number) {
+}
+@@tests
+$t('carregarUsuario(2)', async () => $eq(await carregarUsuario(2), { id: 2, nome: 'Usuário 2' }));
+$t('carregarVarios([1, 2, 3])', async () => $eq((await carregarVarios([1, 2, 3])).map(u => u.nome), ['Usuário 1', 'Usuário 2', 'Usuário 3']));
+$t('tentarCarregar(5) devolve o usuário', async () => $eq((await tentarCarregar(5))?.id, 5));
+$t('tentarCarregar(0) devolve null', async () => $eq(await tentarCarregar(0), null));
+@@types
+## carregarUsuario devolve Promise<Usuario>
+const __m1: __Equal<ReturnType<typeof carregarUsuario>, Promise<Usuario>> = true;
+## carregarVarios devolve Promise<Usuario[]>
+const __m2: __Equal<ReturnType<typeof carregarVarios>, Promise<Usuario[]>> = true;
+## tentarCarregar devolve Promise<Usuario | null>
+const __m3: __Equal<ReturnType<typeof tentarCarregar>, Promise<Usuario | null>> = true;
+## Awaited desembrulha o resultado
+const __m4: __Equal<Awaited<ReturnType<typeof carregarVarios>>, Usuario[]> = true;
+@@hints
+- Anote os retornos: async function carregarUsuario(id: number): Promise<Usuario>
+- carregarVarios: Promise.all(ids.map(carregarUsuario))
+- tentarCarregar: try { return await buscarNoServidor(id); } catch { return null; }
+@@solution
+interface Usuario {
+  id: number;
+  nome: string;
+}
+
+function buscarNoServidor(id: number): Promise<Usuario> {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (id <= 0) reject(new Error("não encontrado"));
+      else resolve({ id, nome: `Usuário ${id}` });
+    }, 20);
+  });
+}
+
+async function carregarUsuario(id: number): Promise<Usuario> {
+  return buscarNoServidor(id);
+}
+
+async function carregarVarios(ids: number[]): Promise<Usuario[]> {
+  return Promise.all(ids.map(carregarUsuario));
+}
+
+async function tentarCarregar(id: number): Promise<Usuario | null> {
+  try {
+    return await buscarNoServidor(id);
+  } catch {
+    return null;
+  }
+}
+
+@@module ts-profissional | ts | TypeScript profissional | Configuração, um mini-projeto real e boas práticas de equipe.
+
+@@lesson ts-config-estrito | tsconfig e o modo estrito | 15
+@@body
+O arquivo **`tsconfig.json`** diz ao compilador como checar e o que gerar. Um ponto de partida moderno:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true
+  },
+  "include": ["src"]
+}
+```
+
+### `strict: true`: o que liga
+
+É um atalho para várias checagens. As mais importantes:
+
+- `strictNullChecks`: `null` e `undefined` não cabem em qualquer tipo. Acaba com o clássico "Cannot read properties of undefined".
+- `noImplicitAny`: obriga a anotar quando o TS não consegue inferir.
+- `strictFunctionTypes` e `strictBindCallApply`: checagem correta de funções.
+- `strictPropertyInitialization`: campos de classe precisam ser inicializados.
+- `useUnknownInCatchVariables`: a variável do `catch` é `unknown`.
+
+**Projetos novos devem começar com `strict: true`.** É muito mais difícil ligar depois.
+
+### Flags extras valiosas
+
+- `noUncheckedIndexedAccess`: `lista[0]` passa a ser `T | undefined`, refletindo que o índice pode não existir.
+- `exactOptionalPropertyTypes`: distingue "ausente" de "presente como undefined".
+- `noImplicitReturns` e `noFallthroughCasesInSwitch`: pegam descuidos.
+
+### Importar só tipos
+
+```ts
+import type { Usuario } from "./tipos";
+```
+
+`import type` é apagado na compilação. Com `verbatimModuleSyntax`, o TS exige que você seja explícito.
+
+### Outros conceitos de projeto
+
+- **`.d.ts`:** arquivos que só descrevem tipos. Pacotes do npm sem tipos próprios têm tipos em `@types/nome`.
+- **`satisfies`:** valida que um valor cabe em um tipo **sem alargar** o tipo inferido.
+- **Linters:** `typescript-eslint` acrescenta regras como "proíba `any` explícito".
+- **Versões:** em julho de 2026 saiu o TypeScript 7, com compilador nativo, bem mais rápido. A linguagem que você aprendeu aqui é a mesma. O compilador no navegador deste site é o da série 5.x.
+
+> Esta lição é de leitura. Experimente instalar localmente: `npm install -D typescript` e `npx tsc --init`.
+
+@@lesson ts-projeto-result | Projeto: tipo Result e validação | 45
+@@body
+Hora de juntar tudo: genéricos, uniões discriminadas, narrowing e `unknown`. Vamos construir o tipo **`Resultado`**, um padrão profissional para operações que podem falhar **sem lançar exceções**.
+
+```ts
+type Resultado<T, E = string> =
+  | { ok: true; valor: T }
+  | { ok: false; erro: E };
+
+function sucesso<T>(valor: T): Resultado<T, never> {
+  return { ok: true, valor };
+}
+function falha<E>(erro: E): Resultado<never, E> {
+  return { ok: false, erro };
+}
+```
+
+Quem recebe um `Resultado` é **obrigado** a verificar `ok` antes de acessar `valor`:
+
+```ts
+const r = dividir(10, 0);
+if (r.ok) {
+  console.log(r.valor);   // number
+} else {
+  console.log(r.erro);    // string
+}
+// r.valor;               // erro: Property 'valor' does not exist on type '{ ok: false; ... }'
+```
+
+O compilador impede de ignorar o caminho de erro. Linguagens como Rust usam exatamente essa ideia.
+
+### Validando dados externos
+
+Dados de fora são `unknown`. Uma função de validação os transforma em um tipo confiável, ou devolve a falha com a explicação. É a base de bibliotecas como Zod, em versão mínima.
+@@task
+Implemente `Resultado<T, E = string>`, `sucesso`, `falha`, `dividir(a, b)` (falha com `"divisão por zero"` se `b` for 0), `mapear(r, fn)` (aplica `fn` ao valor se for sucesso; propaga a falha) e `validarUsuario(dado: unknown): Resultado<Usuario>` (precisa ser objeto com `nome` string não vazia e `idade` número inteiro ≥ 0; mensagens de erro: `"dado inválido"`, `"nome inválido"`, `"idade inválida"`).
+@@starter
+interface Usuario {
+  nome: string;
+  idade: number;
+}
+
+type Resultado<T, E = string> = any;
+
+function sucesso<T>(valor: T) {
+}
+
+function falha<E>(erro: E) {
+}
+
+function dividir(a: number, b: number): Resultado<number> {
+}
+
+function mapear<T, U, E>(r: Resultado<T, E>, fn: (valor: T) => U): Resultado<U, E> {
+}
+
+function validarUsuario(dado: unknown): Resultado<Usuario> {
+}
+@@tests
+$t('dividir(10, 4) = sucesso 2.5', () => $eq(dividir(10, 4), { ok: true, valor: 2.5 }));
+$t('dividir(1, 0) = falha "divisão por zero"', () => $eq(dividir(1, 0), { ok: false, erro: 'divisão por zero' }));
+$t('mapear aplica a função no sucesso', () => $eq(mapear(sucesso(2), (n: number) => n * 10), { ok: true, valor: 20 }));
+$t('mapear propaga a falha', () => $eq(mapear(falha('x'), (n: number) => n * 10), { ok: false, erro: 'x' }));
+$t('validarUsuario aceita um usuário válido', () => $eq(validarUsuario({ nome: 'Ana', idade: 30 }), { ok: true, valor: { nome: 'Ana', idade: 30 } }));
+$t('validarUsuario recusa não-objetos', () => { $eq(validarUsuario(null), { ok: false, erro: 'dado inválido' }); $eq(validarUsuario('x'), { ok: false, erro: 'dado inválido' }); });
+$t('validarUsuario recusa nome inválido', () => { $eq(validarUsuario({ nome: '', idade: 1 }), { ok: false, erro: 'nome inválido' }); $eq(validarUsuario({ idade: 1 }), { ok: false, erro: 'nome inválido' }); });
+$t('validarUsuario recusa idade inválida', () => { $eq(validarUsuario({ nome: 'A', idade: -1 }), { ok: false, erro: 'idade inválida' }); $eq(validarUsuario({ nome: 'A', idade: 1.5 }), { ok: false, erro: 'idade inválida' }); $eq(validarUsuario({ nome: 'A', idade: '3' }), { ok: false, erro: 'idade inválida' }); });
+@@types
+## dividir devolve Resultado<number>
+const __n1: __Equal<ReturnType<typeof dividir>, Resultado<number>> = true;
+## após checar ok, valor é number
+declare const __n2: Resultado<number>;
+if (__n2.ok) { const __n2v: number = __n2.valor; } else { const __n2e: string = __n2.erro; }
+## sem checar ok, valor não é acessível
+// @ts-expect-error
+__n2.valor;
+## Resultado aceita tipo de erro próprio
+declare const __n3: Resultado<string, number>;
+if (!__n3.ok) { const __n3e: number = __n3.erro; }
+## mapear transforma o tipo do sucesso
+declare const __n4: Resultado<number>;
+const __n5 = mapear(__n4, (n) => String(n));
+const __n5t: __Equal<typeof __n5, Resultado<string, string>> = true;
+## validarUsuario devolve Resultado<Usuario>
+const __n6: __Equal<ReturnType<typeof validarUsuario>, Resultado<Usuario>> = true;
+@@hints
+- type Resultado<T, E = string> = { ok: true; valor: T } | { ok: false; erro: E };
+- sucesso devolve { ok: true, valor }; falha devolve { ok: false, erro }. Anote os retornos como Resultado<T, never> e Resultado<never, E>.
+- mapear: if (!r.ok) return r; return sucesso(fn(r.valor));
+- validarUsuario: comece com if (typeof dado !== "object" || dado === null) ...; depois leia as propriedades com "nome" in dado ou convertendo para Record<string, unknown>.
+@@solution
+interface Usuario {
+  nome: string;
+  idade: number;
+}
+
+type Resultado<T, E = string> =
+  | { ok: true; valor: T }
+  | { ok: false; erro: E };
+
+function sucesso<T>(valor: T): Resultado<T, never> {
+  return { ok: true, valor };
+}
+
+function falha<E>(erro: E): Resultado<never, E> {
+  return { ok: false, erro };
+}
+
+function dividir(a: number, b: number): Resultado<number> {
+  if (b === 0) return falha("divisão por zero");
+  return sucesso(a / b);
+}
+
+function mapear<T, U, E>(r: Resultado<T, E>, fn: (valor: T) => U): Resultado<U, E> {
+  if (!r.ok) return r;
+  return sucesso(fn(r.valor));
+}
+
+function validarUsuario(dado: unknown): Resultado<Usuario> {
+  if (typeof dado !== "object" || dado === null) return falha("dado inválido");
+  const campos = dado as Record<string, unknown>;
+  const { nome, idade } = campos;
+  if (typeof nome !== "string" || nome.length === 0) return falha("nome inválido");
+  if (typeof idade !== "number" || !Number.isInteger(idade) || idade < 0) return falha("idade inválida");
+  return sucesso({ nome, idade });
+}
+
+@@lesson ts-boas-praticas | Boas práticas e próximos passos | 15
+@@body
+O que times profissionais de TypeScript costumam adotar:
+
+### Tipos
+
+1. **`strict` sempre ligado.** Sem exceção em projeto novo.
+2. **Evite `any`.** Use `unknown` e estreite. Se precisar de `any`, comente por quê.
+3. **Deixe o TS inferir** o que for óbvio; **anote** assinaturas públicas (parâmetros e retornos de funções exportadas).
+4. **Prefira uniões de literais a `enum`** na maioria dos casos: são mais simples e somem na compilação.
+5. **Derive tipos de valores** (`as const`, `typeof`, `keyof`) em vez de duplicar listas.
+6. **Modele estados com uniões discriminadas**, de modo que estados inválidos não possam ser representados.
+7. **Cuidado com `as`.** Uma asserção de tipo é uma promessa que o compilador não confere. Use só na fronteira (depois de validar) e prefira type guards.
+8. **`@ts-expect-error` em vez de `@ts-ignore`:** o primeiro avisa quando deixar de ser necessário.
+
+### Fronteiras
+
+Dados que entram (API, formulário, arquivo, variável de ambiente) são `unknown` até serem **validados**. Bibliotecas como **Zod** ou **Valibot** definem o esquema uma vez e derivam o tipo estático dele.
+
+### Ferramentas
+
+- **ESLint + typescript-eslint** para regras de qualidade.
+- **Prettier** para formatação automática.
+- **Vitest** para testes (inclusive de tipos, com `expectTypeOf`).
+- **tsc --noEmit** na integração contínua para barrar erros de tipo.
+
+### Próximos passos
+
+- Combine TS com um framework: **React + TypeScript** é a combinação mais pedida.
+- Estude **Node.js com TypeScript** (Fastify, Express, NestJS) e **bancos de dados tipados** (Prisma, Drizzle).
+- Leia a documentação oficial, o *TypeScript Handbook*, e as notas de lançamento a cada versão.
+- Refaça, sem olhar, os exercícios em que você mais sofreu. Esse é o caminho mais rápido para fixar.
+
+> Esta lição é de leitura. Parabéns por chegar até aqui. Os **Desafios de lógica** são a melhor forma de manter a mente afiada.
